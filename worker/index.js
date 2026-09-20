@@ -77,6 +77,7 @@ async function classifyWithJev(request, env) {
     assemblyConfidence: assemblyAnswer?.confidence ?? assemblyAnswer?.probabilities?.[assemblyAnswer?.choice] ?? null,
     probabilities: answer.probabilities ?? null,
     assemblyProbabilities: assemblyAnswer?.probabilities ?? null,
+    usage: data?.usage ?? null,
     provider: "typesafe/jev-1.13",
   });
 }

@@ -159,6 +159,13 @@ function PartCard({ product, selected, onSelect }) {
   );
 }
 
+function CarouselPart({ product, onPick }) {
+  return <article className="carousel-part">
+    <div className={`carousel-image part-image-${product.accent}`}>{product.imageUrl && <img src={product.imageUrl} alt="" loading="lazy" />}<button onClick={() => onPick(product.id)}>Pick</button></div>
+    <strong>{product.title}</strong><span>{product.price}</span>
+  </article>;
+}
+
 export function App() {
   const [selectedModel, setSelectedModel] = useState(MODELS[0]);
   const [query, setQuery] = useState("I need a controller for my Dualtron Mini");
@@ -178,6 +185,7 @@ export function App() {
     provider: "typesafe/jev-1.13",
     confidence: null,
     probabilities: null,
+    usage: null,
   }));
 
   useEffect(() => {
@@ -185,13 +193,13 @@ export function App() {
     if (!submittedQuery.trim()) {
       setIntent({ category: null, assembly: null, confidence: null, label: "all parts", review: false });
       setJevStatus("idle");
-      setJevRun({ query: "", state: "idle", endpoint: "/api/jev-intent", duration: null, provider: "No JEV filter", confidence: null, probabilities: null });
+      setJevRun({ query: "", state: "idle", endpoint: "/api/jev-intent", duration: null, provider: "No JEV filter", confidence: null, probabilities: null, usage: null });
       return () => { cancelled = true; };
     }
     async function decide() {
       const startedAt = performance.now();
       setJevStatus("checking");
-      setJevRun({ query: submittedQuery, state: "checking", endpoint: "/api/jev-intent", duration: null, provider: "typesafe/jev-1.13", confidence: null, probabilities: null });
+      setJevRun({ query: submittedQuery, state: "checking", endpoint: "/api/jev-intent", duration: null, provider: "typesafe/jev-1.13", confidence: null, probabilities: null, usage: null });
       try {
         const response = await fetch("/api/jev-intent", {
           method: "POST",
@@ -204,13 +212,13 @@ export function App() {
         if (!cancelled) {
           setIntent({ category: decision.category, assembly: decision.assembly ?? null, confidence: decision.confidence ?? 0, label: CATEGORIES.find((item) => item.id === decision.category)?.label ?? decision.category, review: false });
           setJevStatus("live");
-          setJevRun({ query: submittedQuery, state: "complete", endpoint: "/api/jev-intent", duration: Math.round(performance.now() - startedAt), provider: decision.provider ?? "typesafe/jev-1.13", confidence: decision.confidence ?? null, probabilities: decision.probabilities ?? null });
+          setJevRun({ query: submittedQuery, state: "complete", endpoint: "/api/jev-intent", duration: Math.round(performance.now() - startedAt), provider: decision.provider ?? "typesafe/jev-1.13", confidence: decision.confidence ?? null, probabilities: decision.probabilities ?? null, usage: decision.usage ?? null });
         }
       } catch {
         if (!cancelled) {
           setIntent(classifyRequest(submittedQuery));
           setJevStatus("offline");
-          setJevRun({ query: submittedQuery, state: "fallback", endpoint: "/api/jev-intent", duration: Math.round(performance.now() - startedAt), provider: "local fallback", confidence: null, probabilities: null });
+          setJevRun({ query: submittedQuery, state: "fallback", endpoint: "/api/jev-intent", duration: Math.round(performance.now() - startedAt), provider: "local fallback", confidence: null, probabilities: null, usage: null });
         }
       }
     }
@@ -239,6 +247,9 @@ export function App() {
   const availableSubassemblies = useMemo(() => [...new Set(assemblyMatches.flatMap((product) => product.subassembly || []))].sort(), [assemblyMatches]);
   const allMatches = useMemo(() => assemblyMatches.filter((product) => !subassemblyFilter || product.subassembly?.includes(subassemblyFilter)), [assemblyMatches, subassemblyFilter]);
   const matches = allMatches.slice(0, 24);
+  const carouselMatches = allMatches.slice(0, 10);
+  const usageTokens = jevRun.usage?.total_tokens ?? jevRun.usage?.totalTokens ?? null;
+  const usageCost = jevRun.usage?.cost ?? null;
 
   useEffect(() => {
     setAssemblyFilter(intent.assembly || "");
@@ -325,6 +336,11 @@ export function App() {
         <div className="context-row">
           <span className="fixed-model"><span className="model-dot" />Dualtron Mini</span>
         </div>
+
+        <section className="search-carousel" aria-label="Matching parts preview">
+          <div><strong>Matching parts</strong><span>{allMatches.length} compatible</span></div>
+          <div className="carousel-track">{carouselMatches.map((product) => <CarouselPart key={product.id} product={product} onPick={togglePicked} />)}</div>
+        </section>
       </section>
 
       <section className="results-section">
@@ -405,6 +421,17 @@ export function App() {
         {picked.length > 0 && (
           <div className="picked-bar"><span><Check size={17} aria-hidden="true" /> {picked.length} part{picked.length === 1 ? "" : "s"} picked</span><button onClick={() => setPicked([])}>Clear selection</button></div>
         )}
+
+        <section className="jev-workings" aria-label="How JEV works">
+          <div className="workings-title"><span>How JEV produces these results</span><strong>Live decision trace</strong></div>
+          <div className="workings-steps">
+            <article><small>01 · INPUT</small><strong>Natural-language request</strong><p>{jevRun.query || "No request — all tagged parts"}</p></article>
+            <article><small>02 · JEV</small><strong>Structured decisions</strong><p>Category: <b>{intent.category ?? "all parts"}</b><br />Assembly: <b>{intent.assembly ?? "all"}</b><br />Confidence: <b>{jevRun.confidence === null ? "—" : `${Math.round(jevRun.confidence * 100)}%`}</b></p></article>
+            <article><small>03 · SAFETY GATE</small><strong>Shopify compatibility</strong><p>Exact product tag: <b>Dualtron Mini</b><br />Eligible products: <b>{modelProductCount}</b></p></article>
+            <article><small>04 · RESULT</small><strong>Filtered catalogue</strong><p>Displayed: <b>{allMatches.length}</b><br />Latency: <b>{jevRun.duration === null ? "—" : `${jevRun.duration} ms`}</b><br />Tokens: <b>{usageTokens ?? "not reported"}</b><br />Cost: <b>{usageCost ?? "not reported"}</b></p></article>
+          </div>
+          <p className="workings-note">JEV determines the intent; it never decides product compatibility. The Shopify model tag is always the final gate.</p>
+        </section>
       </section>
     </main>
   );
