@@ -175,7 +175,7 @@ function PartCard({ product, selected, onSelect }) {
 }
 
 function ResultPile({ catalogue, matches, picked, onPick }) {
-  const preferred = [...matches, ...catalogue.filter((product) => !matches.some((match) => match.id === product.id))].slice(0, 72);
+  const preferred = [...matches, ...catalogue.filter((product) => !matches.some((match) => match.id === product.id))].slice(0, 54);
   const matchIds = new Set(matches.map((product) => product.id));
   return <section className="result-pile" aria-label="JEV sorted product pile">
     <div className="pile-caption"><strong>Compatible product pile</strong><span>{matches.length} raised by JEV</span></div>
@@ -185,12 +185,12 @@ function ResultPile({ catalogue, matches, picked, onPick }) {
         const isMatch = matchIds.has(product.id);
         // The catalogue is intentionally a loose tabletop scatter. Matches move
         // onto a smaller, irregular "found" cluster rather than a rigid grid.
-        const pileLeft = 2 + ((index * 37) % 94);
-        const pileTop = 30 + ((index * 29) % 58);
+        const pileLeft = 2 + ((index * 47) % 93) + Math.sin(index * 1.7) * 2.5;
+        const pileTop = 25 + ((index * 31) % 59) + Math.cos(index * 1.3) * 3;
         const alignedPositions = [
-          [15, 8], [35, 2], [57, 10], [76, 4],
-          [25, 30], [47, 25], [68, 32], [84, 27],
-          [38, 49], [59, 46], [79, 52], [18, 51],
+          [31, 10], [44, 2], [57, 11], [69, 5],
+          [37, 30], [51, 24], [64, 31], [74, 26],
+          [44, 49], [57, 45], [68, 51], [32, 50],
         ];
         const [alignedLeft, alignedTop] = alignedPositions[Math.max(matchIndex, 0) % alignedPositions.length];
         return <button key={product.id} className={`pile-item ${isMatch ? "is-match" : ""} ${picked.includes(product.id) ? "is-picked" : ""}`} onClick={() => onPick(product.id)} style={{ "--pile-left": `${pileLeft}%`, "--pile-top": `${pileTop}%`, "--aligned-left": `${alignedLeft}%`, "--aligned-top": `${alignedTop}%`, "--rotation": `${(index % 7 - 3) * 4}deg` }} aria-label={`Pick ${product.title}`}>
