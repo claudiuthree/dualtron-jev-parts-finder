@@ -75,6 +75,8 @@ async function classifyWithJev(request, env) {
     assembly: ASSEMBLY_CRITERIA[assemblyAnswer?.choice] && assemblyAnswer.choice !== "No assembly filter" ? assemblyAnswer.choice : null,
     confidence: answer.confidence ?? answer.probabilities?.[answer.choice] ?? null,
     assemblyConfidence: assemblyAnswer?.confidence ?? assemblyAnswer?.probabilities?.[assemblyAnswer?.choice] ?? null,
+    probabilities: answer.probabilities ?? null,
+    assemblyProbabilities: assemblyAnswer?.probabilities ?? null,
     provider: "typesafe/jev-1.13",
   });
 }

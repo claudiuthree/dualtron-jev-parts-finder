@@ -169,6 +169,7 @@ export function App() {
   const [subassemblyFilter, setSubassemblyFilter] = useState("");
   const [intent, setIntent] = useState(() => classifyRequest(query));
   const [jevStatus, setJevStatus] = useState("checking");
+  const [showJevDetails, setShowJevDetails] = useState(false);
   const [jevRun, setJevRun] = useState(() => ({
     query,
     state: "checking",
@@ -176,6 +177,7 @@ export function App() {
     duration: null,
     provider: "typesafe/jev-1.13",
     confidence: null,
+    probabilities: null,
   }));
 
   useEffect(() => {
@@ -183,7 +185,7 @@ export function App() {
     async function decide() {
       const startedAt = performance.now();
       setJevStatus("checking");
-      setJevRun({ query: submittedQuery, state: "checking", endpoint: "/api/jev-intent", duration: null, provider: "typesafe/jev-1.13", confidence: null });
+      setJevRun({ query: submittedQuery, state: "checking", endpoint: "/api/jev-intent", duration: null, provider: "typesafe/jev-1.13", confidence: null, probabilities: null });
       try {
         const response = await fetch("/api/jev-intent", {
           method: "POST",
@@ -196,13 +198,13 @@ export function App() {
         if (!cancelled) {
           setIntent({ category: decision.category, assembly: decision.assembly ?? null, confidence: decision.confidence ?? 0, label: CATEGORIES.find((item) => item.id === decision.category)?.label ?? decision.category, review: false });
           setJevStatus("live");
-          setJevRun({ query: submittedQuery, state: "complete", endpoint: "/api/jev-intent", duration: Math.round(performance.now() - startedAt), provider: decision.provider ?? "typesafe/jev-1.13", confidence: decision.confidence ?? null });
+          setJevRun({ query: submittedQuery, state: "complete", endpoint: "/api/jev-intent", duration: Math.round(performance.now() - startedAt), provider: decision.provider ?? "typesafe/jev-1.13", confidence: decision.confidence ?? null, probabilities: decision.probabilities ?? null });
         }
       } catch {
         if (!cancelled) {
           setIntent(classifyRequest(submittedQuery));
           setJevStatus("offline");
-          setJevRun({ query: submittedQuery, state: "fallback", endpoint: "/api/jev-intent", duration: Math.round(performance.now() - startedAt), provider: "local fallback", confidence: null });
+          setJevRun({ query: submittedQuery, state: "fallback", endpoint: "/api/jev-intent", duration: Math.round(performance.now() - startedAt), provider: "local fallback", confidence: null, probabilities: null });
         }
       }
     }
@@ -375,6 +377,21 @@ export function App() {
             <div className="console-line console-safe"><span>04</span><code>Shopify tag gate: <b>{selectedModel.name}</b> → {modelProductCount} compatible products</code></div>
           </div>
           <div className="jev-console-footer"><span>Server-side key stays in Cloudflare</span><span>{jevRun.duration === null ? "running" : `${jevRun.duration} ms`}</span></div>
+          {jevRun.state === "complete" && (
+            <>
+              <button className="jev-details-toggle" onClick={() => setShowJevDetails((open) => !open)} aria-expanded={showJevDetails}>
+                {showJevDetails ? "Hide" : "Show"} JEV confidence breakdown <ChevronDown size={14} />
+              </button>
+              {showJevDetails && (
+                <div className="jev-details">
+                  <p>JEV scores the fixed choices, then the catalogue applies the selected result.</p>
+                  {(Object.entries(jevRun.probabilities || {}).sort(([, a], [, b]) => b - a).slice(0, 4)).map(([category, probability]) => (
+                    <div className="jev-probability" key={category}><span>{category}</span><div><i style={{ width: `${Math.round(probability * 100)}%` }} /></div><b>{Math.round(probability * 100)}%</b></div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </section>
 
         <div className="product-grid">
