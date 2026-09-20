@@ -286,24 +286,12 @@ export function App() {
             <span className="brand-subtitle">Shopify demo · {jevStatus === "live" ? "JEV decisions live" : "JEV connecting"}</span>
           </div>
         </div>
-        <div className="topbar-right">
-          <span className="tag-source"><span className="source-pulse" /> Compatibility tags live</span>
-          <span className="store-pill"><Store size={14} aria-hidden="true" /> dualtron.uk</span>
-        </div>
+        <span className="tag-source"><span className="source-pulse" /> Shopify compatibility tags</span>
       </header>
 
       <section className="search-stage">
-        <div className="ambient-icon ambient-one"><BatteryCharging size={23} aria-hidden="true" /></div>
-        <div className="ambient-icon ambient-two"><Disc3 size={21} aria-hidden="true" /></div>
-        <div className="ambient-icon ambient-three"><Gauge size={22} aria-hidden="true" /></div>
-        <div className="ambient-icon ambient-four"><Zap size={22} aria-hidden="true" /></div>
-        <div className="ambient-orb orb-one" />
-        <div className="ambient-orb orb-two" />
-
         <div className="stage-intro">
-          <span className="stage-kicker"><Sparkles size={14} aria-hidden="true" /> Find the part that fits</span>
-          <h1>What do you need for your scooter?</h1>
-          <p>Ask naturally. We’ll use your scooter’s existing compatibility tags to keep the results safe.</p>
+          <h1>Find the part you need.</h1>
         </div>
 
         <form className="search-box" onSubmit={submitSearch}>
@@ -338,28 +326,11 @@ export function App() {
               </div>
             )}
           </div>
-          <span className="context-note"><ShieldCheck size={15} aria-hidden="true" /> Compatibility is filtered from existing product tags</span>
         </div>
-
-        <img className="parts-visual" src="/assets/parts-collection.png" alt="Electric scooter controller, throttle and brake parts" />
       </section>
 
       <section className="results-section">
         <div className="catalog-filters" aria-label="Catalogue filters">
-          <div className="filter-row">
-            <span className="filter-label">Category</span>
-            <div className="filter-chips">
-              <button className={`filter-chip ${!intent.category ? "active" : ""}`} onClick={() => useCategory("all")}>
-                <Wrench size={14} aria-hidden="true" /> All parts
-              </button>
-              {CATEGORIES.map((category) => (
-                <button key={category.id} onClick={() => useCategory(category.id)} className={`filter-chip ${intent.category === category.id ? "active" : ""}`}>
-                  <category.icon size={14} aria-hidden="true" /> {category.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
           <div className="filter-row">
             <span className="filter-label">Assembly</span>
             <div className="filter-chips">
@@ -387,17 +358,9 @@ export function App() {
 
         <div className="results-heading">
           <div>
-            <p className="result-kicker">MATCHED FOR {selectedModel.name.toUpperCase()}</p>
             <h2>{allMatches.length} {intent.label} {allMatches.length === 1 ? "option" : "options"}</h2>
           </div>
-          <div className="result-summary"><span className="summary-check"><Check size={13} aria-hidden="true" /></span> {modelProductCount} products carry this model tag{allMatches.length > matches.length ? ` · Showing ${matches.length}` : ""}</div>
-        </div>
-
-        <div className="match-proof">
-          <span><Sparkles size={14} aria-hidden="true" /> Intent <strong>{intent.label}</strong></span>
-          <span><ShieldCheck size={14} aria-hidden="true" /> {selectedModel.name} tag gate</span>
-          <span><span className="tiny-dot" /> Model · Assembly · Subassembly</span>
-          <span className="proof-live">{jevStatus === "live" ? "JEV live" : "catalogue preview"}</span>
+          <div className="result-summary">{selectedModel.name} tag gate · {modelProductCount} compatible parts</div>
         </div>
 
         <section className={`jev-console jev-console-${jevRun.state}`} aria-live="polite" aria-label="JEV decision console">
