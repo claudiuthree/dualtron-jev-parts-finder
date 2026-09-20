@@ -169,13 +169,6 @@ function PartCard({ product, selected, onSelect }) {
   );
 }
 
-function CarouselPart({ product, onPick }) {
-  return <article className="carousel-part">
-    <div className={`carousel-image part-image-${product.accent}`}>{product.imageUrl && <img src={product.imageUrl} alt="" loading="lazy" />}<button onClick={() => onPick(product.id)}>Pick</button></div>
-    <strong>{product.title}</strong><span>{product.price}</span>
-  </article>;
-}
-
 export function App() {
   const [selectedModel, setSelectedModel] = useState(MODELS[0]);
   const [query, setQuery] = useState("I need a controller for my Dualtron Mini");
@@ -355,7 +348,7 @@ export function App() {
 
         <section className="search-carousel" aria-label="Matching parts preview">
           <div><strong>Matching parts</strong><span>{allMatches.length} compatible</span></div>
-          <div className="carousel-track">{carouselMatches.map((product) => <CarouselPart key={product.id} product={product} onPick={togglePicked} />)}</div>
+          <div className="carousel-track">{carouselMatches.map((product) => <PartCard key={product.id} product={product} selected={picked.includes(product.id)} onSelect={togglePicked} />)}</div>
         </section>
       </section>
 
@@ -422,18 +415,6 @@ export function App() {
             </>
           )}
         </section>
-
-        <div className="product-grid">
-          {matches.length > 0 ? matches.map((product) => (
-            <PartCard key={product.id} product={product} selected={picked.includes(product.id)} onSelect={togglePicked} />
-          )) : (
-            <div className="empty-state"><CircleAlert size={24} /><strong>No tagged matches yet</strong><span>Try another category, assembly, subassembly or scooter model.</span></div>
-          )}
-        </div>
-
-        {titleRefinedMatches.length > matches.length && (
-          <div className="grid-more"><span>Showing {matches.length} of {titleRefinedMatches.length} matching parts</span><span>Use the filters above to narrow the catalogue</span></div>
-        )}
 
         {picked.length > 0 && (
           <div className="picked-bar"><span><Check size={17} aria-hidden="true" /> {picked.length} part{picked.length === 1 ? "" : "s"} picked</span><button onClick={() => setPicked([])}>Clear selection</button></div>
