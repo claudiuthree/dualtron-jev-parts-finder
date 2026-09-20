@@ -183,10 +183,16 @@ function ResultPile({ catalogue, matches, picked, onPick }) {
       {preferred.map((product, index) => {
         const matchIndex = matches.findIndex((match) => match.id === product.id);
         const isMatch = matchIds.has(product.id);
-        const pileLeft = 12 + ((index * 37) % 78);
-        const pileTop = 36 + ((index * 29) % 45);
-        const alignedLeft = 4 + ((matchIndex % 5) * 19.4);
-        const alignedTop = 7 + (Math.floor(matchIndex / 5) * 45);
+        // The catalogue is intentionally a loose tabletop scatter. Matches move
+        // onto a smaller, irregular "found" cluster rather than a rigid grid.
+        const pileLeft = 2 + ((index * 37) % 94);
+        const pileTop = 30 + ((index * 29) % 58);
+        const alignedPositions = [
+          [15, 8], [35, 2], [57, 10], [76, 4],
+          [25, 30], [47, 25], [68, 32], [84, 27],
+          [38, 49], [59, 46], [79, 52], [18, 51],
+        ];
+        const [alignedLeft, alignedTop] = alignedPositions[Math.max(matchIndex, 0) % alignedPositions.length];
         return <button key={product.id} className={`pile-item ${isMatch ? "is-match" : ""} ${picked.includes(product.id) ? "is-picked" : ""}`} onClick={() => onPick(product.id)} style={{ "--pile-left": `${pileLeft}%`, "--pile-top": `${pileTop}%`, "--aligned-left": `${alignedLeft}%`, "--aligned-top": `${alignedTop}%`, "--rotation": `${(index % 7 - 3) * 4}deg` }} aria-label={`Pick ${product.title}`}>
           {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
         </button>;
@@ -288,7 +294,7 @@ export function App() {
     return refined.length ? refined : allMatches;
   }, [allMatches, specificTitleTerms]);
   const matches = titleRefinedMatches.slice(0, 24);
-  const carouselMatches = titleRefinedMatches.slice(0, 10);
+  const carouselMatches = submittedQuery.trim() ? titleRefinedMatches.slice(0, 10) : [];
   const usageTokens = jevRun.usage?.total_tokens ?? jevRun.usage?.totalTokens ?? null;
   const usageCost = jevRun.usage?.cost ?? null;
 
