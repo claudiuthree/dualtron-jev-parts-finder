@@ -112,6 +112,7 @@ button { cursor: pointer; }
 .model-selector:hover { border-color: #bdc8ec; background: white; }
 .model-selector > span:not(.model-dot) { color: #8b96aa; font-size: 11px; }
 .model-dot { width: 8px; height: 8px; border-radius: 50%; background: #4968e9; box-shadow: 0 0 0 4px rgba(73,104,233,.11); }
+.fixed-model { display: inline-flex; align-items: center; gap: 9px; color: #34405a; font-size: 13px; font-weight: 760; }
 .context-note { gap: 6px; color: #8490a5; font-size: 12px; }
 .context-note svg { color: #3aaf7d; }
 .model-menu { position: absolute; top: 43px; right: 0; width: 240px; padding: 6px; border: 1px solid #e1e5ef; border-radius: 15px; background: white; box-shadow: 0 16px 35px rgba(39, 52, 94, .14); }

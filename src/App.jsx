@@ -309,25 +309,7 @@ export function App() {
         </form>
 
         <div className="context-row">
-          <div className="model-selector-wrap">
-            <span className="context-label">Scooter context</span>
-            <button className="model-selector" onClick={() => setShowModelMenu((open) => !open)} aria-expanded={showModelMenu}>
-              <span className="model-dot" />
-              <strong>{selectedModel.name}</strong>
-              <span>{selectedModel.voltage}</span>
-              <ChevronDown size={15} aria-hidden="true" />
-            </button>
-            {showModelMenu && (
-              <div className="model-menu">
-                {MODELS.map((model) => (
-                  <button key={model.slug} className={model.slug === selectedModel.slug ? "active" : ""} onClick={() => switchModel(model)}>
-                    <span><strong>{model.name}</strong><small>{model.voltage} · {model.count} tagged parts</small></span>
-                    {model.slug === selectedModel.slug && <Check size={15} aria-hidden="true" />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <span className="fixed-model"><span className="model-dot" />Dualtron Mini</span>
         </div>
       </section>
 
