@@ -65,7 +65,7 @@ function titleTerms(value) {
 }
 
 function matchesTitleIntent(product, terms) {
-  const searchable = [product.title, product.partsType, ...(product.subassembly || [])].filter(Boolean).join(" ").toLowerCase();
+  const searchable = product.title.toLowerCase();
   return terms.every((term) => searchable.includes(term));
 }
 
