@@ -185,21 +185,34 @@ function ResultPile({ catalogue, matches, picked, onPick }) {
         const isMatch = matchIds.has(product.id);
         // The catalogue is intentionally a loose tabletop scatter. Matches move
         // onto a smaller, irregular "found" cluster rather than a rigid grid.
-        const pileLeft = 2 + ((index * 47) % 93) + Math.sin(index * 1.7) * 2.5;
-        const pileTop = 25 + ((index * 31) % 59) + Math.cos(index * 1.3) * 3;
+        const column = index % 12;
+        const row = Math.floor(index / 12);
+        const pileLeft = 3 + column * 8 + (row % 2 ? 3.8 : 0);
+        const pileTop = 39 + row * 11;
         const alignedPositions = [
           [31, 10], [44, 2], [57, 11], [69, 5],
           [37, 30], [51, 24], [64, 31], [74, 26],
           [44, 49], [57, 45], [68, 51], [32, 50],
         ];
         const [alignedLeft, alignedTop] = alignedPositions[Math.max(matchIndex, 0) % alignedPositions.length];
-        return <button key={product.id} className={`pile-item ${isMatch ? "is-match" : ""} ${picked.includes(product.id) ? "is-picked" : ""}`} onClick={() => onPick(product.id)} style={{ "--pile-left": `${pileLeft}%`, "--pile-top": `${pileTop}%`, "--aligned-left": `${alignedLeft}%`, "--aligned-top": `${alignedTop}%`, "--rotation": `${(index % 7 - 3) * 4}deg` }} aria-label={`Pick ${product.title}`}>
+        return <button key={product.id} className={`pile-item ${isMatch ? "is-match" : ""} ${picked.includes(product.id) ? "is-picked" : ""}`} onClick={() => onPick(product.id)} style={{ "--pile-left": `${pileLeft}%`, "--pile-top": `${pileTop}%`, "--aligned-left": `${alignedLeft}%`, "--aligned-top": `${alignedTop}%`, "--rotation": `${(index % 5 - 2) * 2}deg`, "--tile-index": index }} aria-label={`Pick ${product.title}`}>
           {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
         </button>;
       })}
     </div>
     <p>JEV and title matching raise the most relevant parts; every other item stays in the compatible catalogue.</p>
   </section>;
+}
+
+function DecisionPills({ intent, matches }) {
+  const assembly = intent.assembly || matches[0]?.assembly?.[0];
+  const subassembly = matches[0]?.subassembly?.[0];
+  if (!assembly && !subassembly) return null;
+
+  return <div className="decision-pills" aria-label="Part classification">
+    {assembly && <span>{assembly}</span>}
+    {subassembly && <span>{subassembly}</span>}
+  </div>;
 }
 
 export function App() {
@@ -380,6 +393,8 @@ export function App() {
           {query && <button className="clear-search" type="button" onClick={clearSearch} aria-label="Clear search and show all parts"><X size={18} /></button>}
           <button className="search-submit" type="submit" aria-label="Find parts"><ArrowUpRight size={22} /></button>
         </form>
+
+        <DecisionPills intent={intent} matches={titleRefinedMatches} />
 
         <div className="context-row">
           <span className="fixed-model"><span className="model-dot" />Dualtron Mini</span>
