@@ -210,6 +210,14 @@ export function App() {
     return () => { cancelled = true; };
   }, [submittedQuery]);
 
+  // Wait for a short pause rather than spending one JEV call per keystroke.
+  useEffect(() => {
+    const nextQuery = query.trim();
+    if (!nextQuery || nextQuery === submittedQuery) return undefined;
+    const timer = window.setTimeout(() => setSubmittedQuery(nextQuery), 450);
+    return () => window.clearTimeout(timer);
+  }, [query, submittedQuery]);
+
   const categoryMatches = useMemo(() => {
     return PRODUCTS.filter((product) => {
       const modelMatch = product.compatibilityTags.includes(selectedModel.slug);
