@@ -195,7 +195,7 @@ function ResultPile({ catalogue, matches, picked, onPick }) {
           [44, 49], [57, 45], [68, 51], [32, 50],
         ];
         const [alignedLeft, alignedTop] = alignedPositions[Math.max(matchIndex, 0) % alignedPositions.length];
-        return <button key={product.id} className={`pile-item ${isMatch ? "is-match" : ""} ${picked.includes(product.id) ? "is-picked" : ""}`} onClick={() => onPick(product.id)} style={{ "--pile-left": `${pileLeft}%`, "--pile-top": `${pileTop}%`, "--aligned-left": `${alignedLeft}%`, "--aligned-top": `${alignedTop}%`, "--rotation": `${(index % 5 - 2) * 2}deg`, "--tile-index": index }} aria-label={`Pick ${product.title}`}>
+        return <button key={product.id} className={`pile-item ${isMatch ? "is-match" : ""} ${picked.includes(product.id) ? "is-picked" : ""}`} onClick={() => onPick(product.id)} style={{ "--pile-left": `${pileLeft}%`, "--pile-top": `${pileTop}%`, "--aligned-left": `${alignedLeft}%`, "--aligned-top": `${alignedTop}%`, "--rotation": `${(index % 5 - 2) * 2}deg`, "--tile-delay": index % 12 }} aria-label={`Pick ${product.title}`}>
           {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
         </button>;
       })}
