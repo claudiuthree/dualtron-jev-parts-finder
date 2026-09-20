@@ -174,6 +174,28 @@ function PartCard({ product, selected, onSelect }) {
   );
 }
 
+function ResultPile({ catalogue, matches, picked, onPick }) {
+  const preferred = [...matches, ...catalogue.filter((product) => !matches.some((match) => match.id === product.id))].slice(0, 72);
+  const matchIds = new Set(matches.map((product) => product.id));
+  return <section className="result-pile" aria-label="JEV sorted product pile">
+    <div className="pile-caption"><strong>Compatible product pile</strong><span>{matches.length} raised by JEV</span></div>
+    <div className="pile-stage">
+      {preferred.map((product, index) => {
+        const matchIndex = matches.findIndex((match) => match.id === product.id);
+        const isMatch = matchIds.has(product.id);
+        const pileLeft = 12 + ((index * 37) % 78);
+        const pileTop = 36 + ((index * 29) % 45);
+        const alignedLeft = 4 + ((matchIndex % 5) * 19.4);
+        const alignedTop = 7 + (Math.floor(matchIndex / 5) * 45);
+        return <button key={product.id} className={`pile-item ${isMatch ? "is-match" : ""} ${picked.includes(product.id) ? "is-picked" : ""}`} onClick={() => onPick(product.id)} style={{ "--pile-left": `${pileLeft}%`, "--pile-top": `${pileTop}%`, "--aligned-left": `${alignedLeft}%`, "--aligned-top": `${alignedTop}%`, "--rotation": `${(index % 7 - 3) * 4}deg` }} aria-label={`Pick ${product.title}`}>
+          {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
+        </button>;
+      })}
+    </div>
+    <p>JEV and title matching raise the most relevant parts; every other item stays in the compatible catalogue.</p>
+  </section>;
+}
+
 export function App() {
   const [selectedModel, setSelectedModel] = useState(MODELS[0]);
   const [query, setQuery] = useState("I need a controller for my Dualtron Mini");
@@ -357,10 +379,7 @@ export function App() {
           <span className="fixed-model"><span className="model-dot" />Dualtron Mini</span>
         </div>
 
-        <section className="search-carousel" aria-label="Matching parts preview">
-          <div><strong>Matching parts</strong><span>{allMatches.length} compatible</span></div>
-          <div className="carousel-track">{carouselMatches.map((product) => <PartCard key={product.id} product={product} selected={picked.includes(product.id)} onSelect={togglePicked} />)}</div>
-        </section>
+        <ResultPile catalogue={PRODUCTS.filter((product) => product.compatibilityTags.includes(selectedModel.slug))} matches={carouselMatches} picked={picked} onPick={togglePicked} />
       </section>
 
       <section className="results-section">
