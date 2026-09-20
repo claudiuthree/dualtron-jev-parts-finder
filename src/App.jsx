@@ -182,6 +182,12 @@ export function App() {
 
   useEffect(() => {
     let cancelled = false;
+    if (!submittedQuery.trim()) {
+      setIntent({ category: null, assembly: null, confidence: null, label: "all parts", review: false });
+      setJevStatus("idle");
+      setJevRun({ query: "", state: "idle", endpoint: "/api/jev-intent", duration: null, provider: "No JEV filter", confidence: null, probabilities: null });
+      return () => { cancelled = true; };
+    }
     async function decide() {
       const startedAt = performance.now();
       setJevStatus("checking");
@@ -247,6 +253,14 @@ export function App() {
     setPicked([]);
   }
 
+  function clearSearch() {
+    setQuery("");
+    setSubmittedQuery("");
+    setAssemblyFilter("");
+    setSubassemblyFilter("");
+    setPicked([]);
+  }
+
   function useCategory(categoryId) {
     const category = CATEGORIES.find((item) => item.id === categoryId);
     const nextQuery = categoryId === "all"
@@ -304,7 +318,7 @@ export function App() {
             onChange={(event) => setQuery(event.target.value)}
             placeholder="e.g. I need a controller for my Dualtron Mini"
           />
-          {query && <button className="clear-search" type="button" onClick={() => setQuery("")} aria-label="Clear search"><X size={18} /></button>}
+          {query && <button className="clear-search" type="button" onClick={clearSearch} aria-label="Clear search and show all parts"><X size={18} /></button>}
           <button className="search-submit" type="submit" aria-label="Find parts"><ArrowUpRight size={22} /></button>
         </form>
 
@@ -350,12 +364,12 @@ export function App() {
         <section className={`jev-console jev-console-${jevRun.state}`} aria-live="polite" aria-label="JEV decision console">
           <div className="jev-console-header">
             <div><span className="terminal-prompt">›_</span><strong>JEV decision console</strong><span className="jev-model">{jevRun.provider}</span></div>
-            <span className="jev-status"><span />{jevRun.state === "complete" ? "Decision received" : jevRun.state === "checking" ? "Calling JEV…" : "Local preview fallback"}</span>
+            <span className="jev-status"><span />{jevRun.state === "complete" ? "Decision received" : jevRun.state === "checking" ? "Calling JEV…" : jevRun.state === "idle" ? "Showing all parts" : "Local preview fallback"}</span>
           </div>
           <div className="jev-console-body">
-            <div className="console-line"><span>01</span><code>POST {jevRun.endpoint}</code></div>
-            <div className="console-line"><span>02</span><code>record: “{jevRun.query}”</code></div>
-            <div className="console-line"><span>03</span><code>category → <b>{intent.category ?? "awaiting decision"}</b>{jevRun.confidence !== null ? ` (${Math.round(jevRun.confidence * 100)}%)` : ""} · assembly → <b>{intent.assembly ?? "all"}</b></code></div>
+            <div className="console-line"><span>01</span><code>{jevRun.state === "idle" ? "No intent filter — full catalogue" : `POST ${jevRun.endpoint}`}</code></div>
+            <div className="console-line"><span>02</span><code>{jevRun.state === "idle" ? "request cleared" : `record: “${jevRun.query}”`}</code></div>
+            <div className="console-line"><span>03</span><code>category → <b>{intent.category ?? "all parts"}</b>{jevRun.confidence !== null ? ` (${Math.round(jevRun.confidence * 100)}%)` : ""} · assembly → <b>{intent.assembly ?? "all"}</b></code></div>
             <div className="console-line console-safe"><span>04</span><code>Shopify tag gate: <b>{selectedModel.name}</b> → {modelProductCount} compatible products</code></div>
           </div>
           <div className="jev-console-footer"><span>Server-side key stays in Cloudflare</span><span>{jevRun.duration === null ? "running" : `${jevRun.duration} ms`}</span></div>
