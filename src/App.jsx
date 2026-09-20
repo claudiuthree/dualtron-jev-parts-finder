@@ -53,6 +53,11 @@ function formatPrice(value, currency = "GBP") {
   return new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(amount);
 }
 
+function formatApiCost(value) {
+  if (!Number.isFinite(value)) return "—";
+  return `$${value < 0.001 ? value.toFixed(6) : value.toFixed(4)}`;
+}
+
 function stockLabel(inventory) {
   if (inventory > 0) return `${inventory} in stock`;
   if (inventory === 0) return "Out of stock";
@@ -180,6 +185,8 @@ export function App() {
   const [intent, setIntent] = useState(() => classifyRequest(query));
   const [jevStatus, setJevStatus] = useState("checking");
   const [showJevDetails, setShowJevDetails] = useState(false);
+  const [sessionCost, setSessionCost] = useState(0);
+  const [requestCount, setRequestCount] = useState(0);
   const [jevRun, setJevRun] = useState(() => ({
     query,
     state: "checking",
@@ -215,6 +222,9 @@ export function App() {
         if (!cancelled) {
           setIntent({ category: decision.category, assembly: decision.assembly ?? null, confidence: decision.confidence ?? 0, label: CATEGORIES.find((item) => item.id === decision.category)?.label ?? decision.category, review: false });
           setJevStatus("live");
+          const requestCost = Number(decision.usage?.cost ?? 0);
+          if (Number.isFinite(requestCost)) setSessionCost((current) => current + requestCost);
+          setRequestCount((count) => count + 1);
           setJevRun({ query: submittedQuery, state: "complete", endpoint: "/api/jev-intent", duration: Math.round(performance.now() - startedAt), provider: decision.provider ?? "typesafe/jev-1.13", confidence: decision.confidence ?? null, probabilities: decision.probabilities ?? null, usage: decision.usage ?? null });
         }
       } catch {
@@ -323,6 +333,7 @@ export function App() {
           </div>
         </div>
         <span className="tag-source"><span className="source-pulse" /> Shopify compatibility tags</span>
+        <span className="cost-meter"><b>JEV</b><span>last {formatApiCost(Number(jevRun.usage?.cost))}</span><span>session {formatApiCost(sessionCost)} · {requestCount} calls</span></span>
       </header>
 
       <section className="search-stage">
