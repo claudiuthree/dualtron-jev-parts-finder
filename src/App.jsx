@@ -59,6 +59,16 @@ function stockLabel(inventory) {
   return "Check stock";
 }
 
+function titleTerms(value) {
+  const ignored = new Set(["i", "need", "a", "an", "the", "for", "my", "dualtron", "mini", "part", "parts", "show", "me"]);
+  return [...new Set(value.toLowerCase().match(/[a-z0-9]+/g)?.filter((word) => word.length > 2 && !ignored.has(word)).map((word) => word.replace(/(ing|ers|er|es|s)$/i, "")) || [])];
+}
+
+function matchesTitleIntent(product, terms) {
+  const searchable = [product.title, product.partsType, ...(product.subassembly || [])].filter(Boolean).join(" ").toLowerCase();
+  return terms.every((term) => searchable.includes(term));
+}
+
 const PRODUCTS = SHOPIFY_PRODUCTS.map((product) => ({
   ...product,
   // Compatibility is intentionally gated by Shopify's raw product tags.
@@ -246,8 +256,14 @@ export function App() {
   const assemblyMatches = useMemo(() => categoryMatches.filter((product) => !assemblyFilter || product.assembly?.includes(assemblyFilter)), [assemblyFilter, categoryMatches]);
   const availableSubassemblies = useMemo(() => [...new Set(assemblyMatches.flatMap((product) => product.subassembly || []))].sort(), [assemblyMatches]);
   const allMatches = useMemo(() => assemblyMatches.filter((product) => !subassemblyFilter || product.subassembly?.includes(subassemblyFilter)), [assemblyMatches, subassemblyFilter]);
-  const matches = allMatches.slice(0, 24);
-  const carouselMatches = allMatches.slice(0, 10);
+  const specificTitleTerms = useMemo(() => titleTerms(submittedQuery), [submittedQuery]);
+  const titleRefinedMatches = useMemo(() => {
+    if (specificTitleTerms.length < 2) return allMatches;
+    const refined = allMatches.filter((product) => matchesTitleIntent(product, specificTitleTerms));
+    return refined.length ? refined : allMatches;
+  }, [allMatches, specificTitleTerms]);
+  const matches = titleRefinedMatches.slice(0, 24);
+  const carouselMatches = titleRefinedMatches.slice(0, 10);
   const usageTokens = jevRun.usage?.total_tokens ?? jevRun.usage?.totalTokens ?? null;
   const usageCost = jevRun.usage?.cost ?? null;
 
@@ -372,7 +388,7 @@ export function App() {
 
         <div className="results-heading">
           <div>
-            <h2>{allMatches.length} {intent.label} {allMatches.length === 1 ? "option" : "options"}</h2>
+            <h2>{titleRefinedMatches.length} {intent.label} {titleRefinedMatches.length === 1 ? "option" : "options"}</h2>
           </div>
           <div className="result-summary">{selectedModel.name} tag gate · {modelProductCount} compatible parts</div>
         </div>
@@ -387,6 +403,7 @@ export function App() {
             <div className="console-line"><span>02</span><code>{jevRun.state === "idle" ? "request cleared" : `record: “${jevRun.query}”`}</code></div>
             <div className="console-line"><span>03</span><code>category → <b>{intent.category ?? "all parts"}</b>{jevRun.confidence !== null ? ` (${Math.round(jevRun.confidence * 100)}%)` : ""} · assembly → <b>{intent.assembly ?? "all"}</b></code></div>
             <div className="console-line console-safe"><span>04</span><code>Shopify tag gate: <b>{selectedModel.name}</b> → {modelProductCount} compatible products</code></div>
+            <div className="console-line"><span>05</span><code>Title refinement: <b>{specificTitleTerms.length > 1 ? specificTitleTerms.join(" + ") : "broad category"}</b> → {titleRefinedMatches.length} results</code></div>
           </div>
           <div className="jev-console-footer"><span>Server-side key stays in Cloudflare</span><span>{jevRun.duration === null ? "running" : `${jevRun.duration} ms`}</span></div>
           {jevRun.state === "complete" && (
@@ -414,8 +431,8 @@ export function App() {
           )}
         </div>
 
-        {allMatches.length > matches.length && (
-          <div className="grid-more"><span>Showing {matches.length} of {allMatches.length} matching parts</span><span>Use the filters above to narrow the catalogue</span></div>
+        {titleRefinedMatches.length > matches.length && (
+          <div className="grid-more"><span>Showing {matches.length} of {titleRefinedMatches.length} matching parts</span><span>Use the filters above to narrow the catalogue</span></div>
         )}
 
         {picked.length > 0 && (
@@ -428,7 +445,7 @@ export function App() {
             <article><small>01 · INPUT</small><strong>Natural-language request</strong><p>{jevRun.query || "No request — all tagged parts"}</p></article>
             <article><small>02 · JEV</small><strong>Structured decisions</strong><p>Category: <b>{intent.category ?? "all parts"}</b><br />Assembly: <b>{intent.assembly ?? "all"}</b><br />Confidence: <b>{jevRun.confidence === null ? "—" : `${Math.round(jevRun.confidence * 100)}%`}</b></p></article>
             <article><small>03 · SAFETY GATE</small><strong>Shopify compatibility</strong><p>Exact product tag: <b>Dualtron Mini</b><br />Eligible products: <b>{modelProductCount}</b></p></article>
-            <article><small>04 · RESULT</small><strong>Filtered catalogue</strong><p>Displayed: <b>{allMatches.length}</b><br />Latency: <b>{jevRun.duration === null ? "—" : `${jevRun.duration} ms`}</b><br />Tokens: <b>{usageTokens ?? "not reported"}</b><br />Cost: <b>{usageCost ?? "not reported"}</b></p></article>
+            <article><small>04 · RESULT</small><strong>Title-refined catalogue</strong><p>Title terms: <b>{specificTitleTerms.length > 1 ? specificTitleTerms.join(", ") : "broad category"}</b><br />Displayed: <b>{titleRefinedMatches.length}</b><br />Latency: <b>{jevRun.duration === null ? "—" : `${jevRun.duration} ms`}</b><br />Tokens: <b>{usageTokens ?? "not reported"}</b><br />Cost: <b>{usageCost ?? "not reported"}</b></p></article>
           </div>
           <p className="workings-note">JEV determines the intent; it never decides product compatibility. The Shopify model tag is always the final gate.</p>
         </section>
