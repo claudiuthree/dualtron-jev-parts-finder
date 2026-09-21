@@ -111,6 +111,8 @@ button { cursor: pointer; }
 .filter-value { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 210px; padding: 10px 10px; border: 0; border-radius: 0 11px 11px 0; outline: 0; color: #155dcc; background: #eaf3ff; font: inherit; font-weight: 760; cursor: pointer; }
 .filter-value span { overflow: hidden; text-overflow: ellipsis; }
 .filter-value svg { flex: 0 0 auto; }
+.filter-value.has-value svg { opacity: 0; transition: opacity .16s ease; }
+.filter-menu:hover .filter-value.has-value svg, .filter-menu:focus-within .filter-value.has-value svg { opacity: 1; }
 .filter-value:disabled { color: #9ba6b7; background: #f5f6f8; cursor: not-allowed; }
 .filter-popover { position: absolute; top: calc(100% + 9px); left: 0; z-index: 12; display: grid; width: max-content; min-width: 245px; max-width: min(360px, calc(100vw - 42px)); max-height: 330px; overflow: auto; padding: 7px; border: 1px solid #dce2eb; border-radius: 15px; background: rgba(255,255,255,.98); box-shadow: 0 20px 38px rgba(29,42,80,.18); }
 .filter-popover button { display: flex; align-items: center; gap: 10px; min-height: 39px; padding: 7px 9px; border: 0; border-radius: 9px; color: #29354d; background: transparent; font: inherit; font-weight: 650; text-align: left; cursor: pointer; }
