@@ -204,28 +204,34 @@ function ResultPile({ catalogue, matches, picked, onPick, onAddToCart, motionKey
   </section>;
 }
 
+function FilterMenu({ id, label, value, options, placeholder, disabled, isOpen, onToggle, onChoose, onClear }) {
+  const displayValue = value || placeholder;
+  return <div className={`filter-menu ${disabled ? "is-disabled" : ""}`}>
+    <span className="filter-label">{label}</span>
+    <button className={`filter-value ${value ? "has-value" : ""}`} type="button" disabled={disabled} onClick={() => onToggle(id)} aria-expanded={isOpen} aria-haspopup="listbox">
+      <span>{displayValue}</span>
+      {value && onClear ? <X size={15} onClick={(event) => { event.stopPropagation(); onClear(); }} aria-hidden="true" /> : <ChevronDown size={15} aria-hidden="true" />}
+    </button>
+    {isOpen && <div className="filter-popover" role="listbox" aria-label={`${label} options`}>
+      {options.map((option) => {
+        const selected = option.value === value;
+        return <button className={selected ? "is-selected" : ""} key={option.value} type="button" role="option" aria-selected={selected} onClick={() => onChoose(option.value)}>
+          <span className="filter-check">{selected && <Check size={14} strokeWidth={3} />}</span>
+          <span>{option.label}</span>
+        </button>;
+      })}
+    </div>}
+  </div>;
+}
+
 function FilterBar({ models, selectedModel, assemblies, subassemblies, activeAssembly, activeSubassembly, onModel, onAssembly, onSubassembly }) {
+  const [openFilter, setOpenFilter] = useState(null);
+  const toggleFilter = (id) => setOpenFilter((current) => current === id ? null : id);
+  const choose = (callback) => (value) => { callback(value); setOpenFilter(null); };
   return <div className="filter-bar" aria-label="Filter compatible scooter parts">
-    <label className="filter-clause">
-      <span>Model is</span>
-      <select value={selectedModel.key} onChange={(event) => onModel(models.find((model) => model.key === event.target.value) ?? models[0])} aria-label="Scooter model">
-        {models.map((model) => <option key={model.key} value={model.key}>{model.name}</option>)}
-      </select>
-    </label>
-    <label className="filter-clause">
-      <span>Assembly is</span>
-      <select value={activeAssembly} onChange={(event) => onAssembly(event.target.value)} aria-label="Assembly">
-        <option value="">All assemblies</option>
-        {assemblies.map((assembly) => <option key={assembly} value={assembly}>{assembly}</option>)}
-      </select>
-    </label>
-    <label className="filter-clause">
-      <span>Subassembly is</span>
-      <select value={activeSubassembly} disabled={!activeAssembly || !subassemblies.length} onChange={(event) => onSubassembly(event.target.value)} aria-label="Subassembly">
-        <option value="">All subassemblies</option>
-        {subassemblies.map((subassembly) => <option key={subassembly} value={subassembly}>{subassembly}</option>)}
-      </select>
-    </label>
+    <FilterMenu id="model" label="Model is" value={selectedModel.key} options={models.map((model) => ({ value: model.key, label: model.name }))} isOpen={openFilter === "model"} onToggle={toggleFilter} onChoose={choose((key) => onModel(models.find((model) => model.key === key) ?? models[0]))} />
+    <FilterMenu id="assembly" label="Assembly is" value={activeAssembly} placeholder="All assemblies" options={assemblies.map((assembly) => ({ value: assembly, label: assembly }))} isOpen={openFilter === "assembly"} onToggle={toggleFilter} onChoose={choose(onAssembly)} onClear={choose(() => onAssembly(""))} />
+    <FilterMenu id="subassembly" label="Subassembly is" value={activeSubassembly} placeholder="All subassemblies" disabled={!activeAssembly || !subassemblies.length} options={subassemblies.map((subassembly) => ({ value: subassembly, label: subassembly }))} isOpen={openFilter === "subassembly"} onToggle={toggleFilter} onChoose={choose(onSubassembly)} onClear={choose(() => onSubassembly(""))} />
     <span className="filter-summary">{SHOPIFY_MODEL_INDEX_SUMMARY.productsWithModel.toLocaleString()} active parts</span>
   </div>;
 }
