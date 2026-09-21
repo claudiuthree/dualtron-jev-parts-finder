@@ -388,7 +388,7 @@ button { cursor: pointer; }
 @media (max-width: 560px) {
   .filter-bar { gap: 6px; padding: 7px; }
   .filter-menu { font-size: 11px; }
-  .filter-label { box-sizing: border-box; flex-basis: 70px; padding: 9px 6px 9px 8px; }
+  .filter-label { box-sizing: border-box; flex-basis: 70px; padding: 9px 6px 9px 8px; font-size: 10px; letter-spacing: .07em; }
   .filter-value { max-width: 145px; padding: 9px 7px; }
 }
 
