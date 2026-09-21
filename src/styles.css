@@ -385,6 +385,13 @@ button { cursor: pointer; }
   .raised-tile { aspect-ratio: auto; padding: 4px; border-radius: 21px; }
 }
 
+@media (max-width: 560px) {
+  .filter-bar { gap: 6px; padding: 7px; }
+  .filter-menu { font-size: 11px; }
+  .filter-label { box-sizing: border-box; flex-basis: 70px; padding: 9px 6px 9px 8px; }
+  .filter-value { max-width: 145px; padding: 9px 7px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
