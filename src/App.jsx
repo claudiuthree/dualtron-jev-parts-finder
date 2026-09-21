@@ -176,6 +176,7 @@ function PartCard({ product, selected, onSelect }) {
 
 function ResultPile({ catalogue, matches, picked, onPick, motionKey }) {
   const pileProducts = catalogue;
+  const resultDensity = matches.length <= 6 ? "large" : matches.length <= 12 ? "medium" : matches.length <= 18 ? "compact" : "dense";
   return <section className="result-pile" aria-label="JEV sorted product pile">
     <div className="pile-caption"><strong>Compatible product pile</strong><span>{matches.length} raised by JEV</span></div>
     <div className="pile-stage">
@@ -190,7 +191,7 @@ function ResultPile({ catalogue, matches, picked, onPick, motionKey }) {
           {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
         </button>;
       })}
-      <div className="raised-grid" aria-label="Selected compatible parts">
+      <div className={`raised-grid density-${resultDensity}`} aria-label="Selected compatible parts">
       {matches.map((product, matchIndex) => {
         return <button key={`raised-${motionKey}-${product.id}`} className="raised-tile" onClick={() => onPick(product.id)} style={{ "--result-delay": `${Math.min(matchIndex, 8) * 55}ms` }} aria-label={`Pick ${product.title}`}>
           {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
