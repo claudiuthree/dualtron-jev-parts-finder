@@ -18,6 +18,7 @@ import {
   Zap,
 } from "lucide-react";
 import { SHOPIFY_PRODUCTS } from "./shopify-catalog.js";
+import { SHOPIFY_MODEL_INDEX, SHOPIFY_MODEL_INDEX_SUMMARY } from "./shopify-model-index.js";
 
 const CATEGORIES = [
   { id: "controller", label: "Controller", icon: Cpu, hint: "ESCs & control boxes" },
@@ -95,6 +96,8 @@ const MODELS = [
   ...model,
   count: PRODUCTS.filter((product) => product.compatibilityTags.includes(model.slug)).length,
 }));
+
+const MODEL_VALUE_COUNTS = new Map(SHOPIFY_MODEL_INDEX.map((model) => [model.name, model.activeProductCount]));
 
 const INTENT_ALIASES = {
   controller: ["controller", "esc", "control box", "speed controller"],
@@ -434,6 +437,15 @@ export function App() {
           <button className="search-submit" type="submit" aria-label="Find parts"><ArrowUpRight size={22} /></button>
         </form>
 
+        <div className="context-row">
+          <div className="model-metafield-source" aria-label="Shopify model data source">
+            <span>Shopify product metafield</span>
+            <code>custom.models_1</code>
+            <small>{SHOPIFY_MODEL_INDEX_SUMMARY.productsWithModel.toLocaleString()} active parts · {SHOPIFY_MODEL_INDEX_SUMMARY.modelValues} models</small>
+          </div>
+          <span className="fixed-model"><span className="model-dot" />Dualtron Mini <small>Mini · {MODEL_VALUE_COUNTS.get("Mini")} active parts</small></span>
+        </div>
+
         <DecisionPills
           assemblies={availableAssemblies}
           subassemblies={availableSubassemblies}
@@ -443,10 +455,6 @@ export function App() {
           onAssembly={chooseAssembly}
           onSubassembly={chooseSubassembly}
         />
-
-        <div className="context-row">
-          <span className="fixed-model"><span className="model-dot" />Dualtron Mini</span>
-        </div>
 
         <ResultPile catalogue={PRODUCTS.filter((product) => product.compatibilityTags.includes(selectedModel.slug))} matches={carouselMatches} picked={picked} onPick={selectPart} pillDensity={visiblePillCount > 12 ? "many" : "few"} motionKey={`${submittedQuery}-${assemblyFilter}-${subassemblyFilter}-${selectedPartId ?? "none"}`} />
       </section>
