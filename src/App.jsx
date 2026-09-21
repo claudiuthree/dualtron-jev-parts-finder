@@ -174,7 +174,7 @@ function PartCard({ product, selected, onSelect }) {
   );
 }
 
-function ResultPile({ catalogue, matches, picked, onPick, motionKey }) {
+function ResultPile({ catalogue, matches, picked, onPick, motionKey, pillDensity }) {
   const pileProducts = catalogue;
   const resultDensity = matches.length <= 6 ? "large" : matches.length <= 12 ? "medium" : matches.length <= 18 ? "compact" : "dense";
   return <section className="result-pile" aria-label="JEV sorted product pile">
@@ -191,7 +191,7 @@ function ResultPile({ catalogue, matches, picked, onPick, motionKey }) {
           {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
         </button>;
       })}
-      <div className={`raised-grid density-${resultDensity}`} aria-label="Selected compatible parts">
+      <div className={`raised-grid density-${resultDensity} pill-density-${pillDensity}`} aria-label="Selected compatible parts">
       {matches.map((product, matchIndex) => {
         return <button key={`raised-${motionKey}-${product.id}`} className="raised-tile" onClick={() => onPick(product.id)} style={{ "--result-delay": `${Math.min(matchIndex, 8) * 55}ms` }} aria-label={`Pick ${product.title}`}>
           {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
@@ -318,6 +318,9 @@ export function App() {
   const carouselMatches = (submittedQuery.trim() || assemblyFilter || subassemblyFilter || selectedPart) ? neighbourMatches.slice(0, 36) : [];
   const usageTokens = jevRun.usage?.total_tokens ?? jevRun.usage?.totalTokens ?? null;
   const usageCost = jevRun.usage?.cost ?? null;
+  const visiblePillCount = !query.trim()
+    ? availableAssemblies.length + (assemblyFilter ? availableSubassemblies.length : 0)
+    : (assemblyFilter || intent.assembly ? 1 : 0) + (subassemblyFilter || selectedPart?.subassembly?.[0] ? 1 : 0);
 
   useEffect(() => {
     setAssemblyFilter(intent.assembly || "");
@@ -436,7 +439,7 @@ export function App() {
           <span className="fixed-model"><span className="model-dot" />Dualtron Mini</span>
         </div>
 
-        <ResultPile catalogue={PRODUCTS.filter((product) => product.compatibilityTags.includes(selectedModel.slug))} matches={carouselMatches} picked={picked} onPick={selectPart} motionKey={`${submittedQuery}-${assemblyFilter}-${subassemblyFilter}-${selectedPartId ?? "none"}`} />
+        <ResultPile catalogue={PRODUCTS.filter((product) => product.compatibilityTags.includes(selectedModel.slug))} matches={carouselMatches} picked={picked} onPick={selectPart} pillDensity={visiblePillCount > 12 ? "many" : "few"} motionKey={`${submittedQuery}-${assemblyFilter}-${subassemblyFilter}-${selectedPartId ?? "none"}`} />
       </section>
 
       <section className="results-section">
