@@ -88,13 +88,11 @@ const PRODUCTS = SHOPIFY_PRODUCTS.map((product) => ({
   accent: ACCENTS[product.category] || "indigo",
 }));
 
-const MODELS = [
-  { name: "Dualtron Mini", slug: "dualtron-mini", voltage: "52V" },
-  { name: "Dualtron Victor", slug: "dualtron-victor", voltage: "60V" },
-  { name: "Dualtron Thunder", slug: "dualtron-thunder", voltage: "72V" },
-].map((model) => ({
-  ...model,
-  count: PRODUCTS.filter((product) => product.compatibilityTags.includes(model.slug)).length,
+const MODELS = SHOPIFY_MODEL_INDEX.map((model) => ({
+  key: model.name,
+  name: `Dualtron ${model.name}`,
+  activeProductCount: model.activeProductCount,
+  count: PRODUCTS.filter((product) => product.model?.includes(model.name)).length,
 }));
 
 const MODEL_VALUE_COUNTS = new Map(SHOPIFY_MODEL_INDEX.map((model) => [model.name, model.activeProductCount]));
@@ -177,16 +175,19 @@ function PartCard({ product, selected, onSelect }) {
   );
 }
 
-function ResultPile({ catalogue, matches, picked, onPick, motionKey, pillDensity }) {
+function ResultPile({ catalogue, matches, picked, onPick, onAddToCart, motionKey, pillDensity }) {
   const pileProducts = catalogue;
   const resultDensity = matches.length <= 6 ? "large" : matches.length <= 12 ? "medium" : matches.length <= 18 ? "compact" : "dense";
   return <section className="result-pile" aria-label="JEV sorted product pile">
     <div className="pile-caption"><strong>Compatible product pile</strong><span>{matches.length} raised by JEV</span></div>
     <div className={`raised-grid density-${resultDensity} pill-density-${pillDensity}`} aria-label="Selected compatible parts">
       {matches.map((product, matchIndex) => {
-        return <button key={`raised-${motionKey}-${product.id}`} className="raised-tile" onClick={() => onPick(product.id)} style={{ "--result-delay": `${Math.min(matchIndex, 8) * 55}ms` }} aria-label={`Pick ${product.title}`}>
-          {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
-        </button>;
+        return <div key={`raised-${motionKey}-${product.id}`} className="raised-tile" style={{ "--result-delay": `${Math.min(matchIndex, 8) * 55}ms` }}>
+          <button className="raised-pick" onClick={() => onPick(product.id)} aria-label={`Pick ${product.title}`}>
+            {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
+          </button>
+          <button className="add-cart" onClick={(event) => { event.stopPropagation(); onAddToCart(product); }} aria-label={`Add ${product.title} to cart`}>Add</button>
+        </div>;
       })}
     </div>
     <div className="pile-stage">
@@ -218,8 +219,8 @@ function DecisionPills({ assemblies, subassemblies, activeAssembly, activeSubass
 }
 
 export function App() {
-  const [selectedModel, setSelectedModel] = useState(MODELS[0]);
-  const [query, setQuery] = useState("I need a controller for my Dualtron Mini");
+  const [selectedModel, setSelectedModel] = useState(() => MODELS.find((model) => model.key === "Mini") ?? MODELS[0]);
+  const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState(query);
   const [picked, setPicked] = useState([]);
   const [selectedPartId, setSelectedPartId] = useState(null);
@@ -302,11 +303,11 @@ export function App() {
 
   const categoryMatches = useMemo(() => {
     return PRODUCTS.filter((product) => {
-      const modelMatch = product.compatibilityTags.includes(selectedModel.slug);
+      const modelMatch = product.model?.includes(selectedModel.key);
       const categoryMatch = !intent.category || product.category === intent.category;
       return modelMatch && categoryMatch;
     });
-  }, [intent.category, selectedModel.slug]);
+  }, [intent.category, selectedModel.key]);
 
   const availableAssemblies = useMemo(() => [...new Set(categoryMatches.flatMap((product) => product.assembly || []))].sort(), [categoryMatches]);
   const assemblyMatches = useMemo(() => categoryMatches.filter((product) => !assemblyFilter || product.assembly?.includes(assemblyFilter)), [assemblyFilter, categoryMatches]);
@@ -321,11 +322,11 @@ export function App() {
   const selectedPart = useMemo(() => PRODUCTS.find((product) => product.id === selectedPartId) ?? null, [selectedPartId]);
   const neighbourMatches = useMemo(() => {
     if (!selectedPart) return titleRefinedMatches;
-    const neighbours = PRODUCTS.filter((product) => product.compatibilityTags.includes(selectedModel.slug)
+    const neighbours = PRODUCTS.filter((product) => product.model?.includes(selectedModel.key)
       && (!assemblyFilter || product.assembly?.includes(assemblyFilter))
       && (!subassemblyFilter || product.subassembly?.includes(subassemblyFilter)));
     return [selectedPart, ...neighbours.filter((product) => product.id !== selectedPart.id)];
-  }, [assemblyFilter, selectedModel.slug, selectedPart, subassemblyFilter, titleRefinedMatches]);
+  }, [assemblyFilter, selectedModel.key, selectedPart, subassemblyFilter, titleRefinedMatches]);
   const matches = neighbourMatches.slice(0, 24);
   const carouselMatches = (submittedQuery.trim() || assemblyFilter || subassemblyFilter || selectedPart) ? neighbourMatches.slice(0, 36) : [];
   const usageTokens = jevRun.usage?.total_tokens ?? jevRun.usage?.totalTokens ?? null;
@@ -339,7 +340,7 @@ export function App() {
     if (!submittedQuery.trim()) return;
     setAssemblyFilter(intent.assembly || "");
     setSubassemblyFilter("");
-  }, [intent.category, intent.assembly, selectedModel.slug, submittedQuery]);
+  }, [intent.category, intent.assembly, selectedModel.key, submittedQuery]);
 
   function submitSearch(event) {
     event.preventDefault();
@@ -406,7 +407,31 @@ export function App() {
     setSubassemblyFilter((current) => current === subassembly ? "" : subassembly);
   }
 
-  const modelProductCount = PRODUCTS.filter((product) => product.compatibilityTags.includes(selectedModel.slug)).length;
+  async function addToCart(product) {
+    // The Shopify Ajax Cart API is same-origin, so this becomes a real add-to-cart
+    // action when the finder is rendered inside the theme.
+    if (window.location.hostname.endsWith("workers.dev")) {
+      window.open(`https://dualtron.uk/products/${product.handle}`, "_blank", "noopener,noreferrer");
+      return;
+    }
+    try {
+      const productResponse = await fetch(`/products/${product.handle}.js`);
+      const storefrontProduct = await productResponse.json();
+      const variantId = storefrontProduct.variants?.find((variant) => variant.available)?.id ?? storefrontProduct.variants?.[0]?.id;
+      if (!variantId) throw new Error("No purchasable variant");
+      const response = await fetch("/cart/add.js", {
+        method: "POST",
+        headers: { "content-type": "application/json", accept: "application/json" },
+        body: JSON.stringify({ items: [{ id: variantId, quantity: 1 }] }),
+      });
+      if (!response.ok) throw new Error("Cart add failed");
+      window.dispatchEvent(new CustomEvent("dualtron:cart-added", { detail: { product } }));
+    } catch {
+      window.location.assign(`/products/${product.handle}`);
+    }
+  }
+
+  const modelProductCount = PRODUCTS.filter((product) => product.model?.includes(selectedModel.key)).length;
 
   return (
     <main className="app-shell">
@@ -441,11 +466,15 @@ export function App() {
 
         <div className="context-row">
           <div className="model-metafield-source" aria-label="Shopify model data source">
-            <span>Shopify product metafield</span>
-            <code>custom.models_1</code>
             <small>{SHOPIFY_MODEL_INDEX_SUMMARY.productsWithModel.toLocaleString()} active parts · {SHOPIFY_MODEL_INDEX_SUMMARY.modelValues} models</small>
           </div>
-          <span className="fixed-model"><span className="model-dot" />Dualtron Mini <small>Mini · {MODEL_VALUE_COUNTS.get("Mini")} active parts</small></span>
+          <label className="model-selector">
+            <span className="model-dot" />
+            <select value={selectedModel.key} onChange={(event) => switchModel(MODELS.find((model) => model.key === event.target.value) ?? MODELS[0])} aria-label="Select your scooter model">
+              {MODELS.map((model) => <option key={model.key} value={model.key}>{model.name} · {model.activeProductCount} active parts</option>)}
+            </select>
+            <ChevronDown size={14} aria-hidden="true" />
+          </label>
         </div>
 
         <DecisionPills
@@ -458,7 +487,7 @@ export function App() {
           onSubassembly={chooseSubassembly}
         />
 
-        <ResultPile catalogue={PRODUCTS.filter((product) => product.compatibilityTags.includes(selectedModel.slug))} matches={carouselMatches} picked={picked} onPick={selectPart} pillDensity={visiblePillCount > 12 ? "many" : "few"} motionKey={`${submittedQuery}-${assemblyFilter}-${subassemblyFilter}-${selectedPartId ?? "none"}`} />
+        <ResultPile catalogue={PRODUCTS.filter((product) => product.model?.includes(selectedModel.key))} matches={carouselMatches} picked={picked} onPick={selectPart} onAddToCart={addToCart} pillDensity={visiblePillCount > 12 ? "many" : "few"} motionKey={`${submittedQuery}-${assemblyFilter}-${subassemblyFilter}-${selectedPartId ?? "none"}`} />
       </section>
 
       <section className="results-section">
