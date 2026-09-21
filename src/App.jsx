@@ -175,18 +175,18 @@ function PartCard({ product, selected, onSelect }) {
 }
 
 function ResultPile({ catalogue, matches, picked, onPick, motionKey }) {
-  const pileProducts = catalogue.slice(0, 54);
+  const pileProducts = catalogue;
   return <section className="result-pile" aria-label="JEV sorted product pile">
     <div className="pile-caption"><strong>Compatible product pile</strong><span>{matches.length} raised by JEV</span></div>
     <div className="pile-stage">
       {pileProducts.map((product, index) => {
         // The catalogue is intentionally a loose tabletop scatter. Matches move
         // onto a smaller, irregular "found" cluster rather than a rigid grid.
-        const column = index % 12;
-        const row = Math.floor(index / 12);
-        const pileLeft = 3 + column * 8 + (row % 2 ? 3.8 : 0);
-        const pileTop = 39 + row * 11;
-        return <button key={`pile-${product.id}`} className={`pile-item ${picked.includes(product.id) ? "is-picked" : ""}`} onClick={() => onPick(product.id)} style={{ "--pile-left": `${pileLeft}%`, "--pile-top": `${pileTop}%`, "--rotation": `${(index % 5 - 2) * 2}deg`, "--tile-delay": index % 12 }} aria-label={`Pick ${product.title}`}>
+        // Deterministic scatter keeps every compatible part visible while
+        // creating the uneven density of a physical pile.
+        const pileLeft = 1 + ((index * 47) % 96) + Math.sin(index * 2.17) * 2;
+        const pileTop = 24 + ((index * 31) % 68) + Math.cos(index * 1.31) * 3;
+        return <button key={`pile-${product.id}`} className={`pile-item ${picked.includes(product.id) ? "is-picked" : ""}`} onClick={() => onPick(product.id)} style={{ "--pile-left": `${pileLeft}%`, "--pile-top": `${pileTop}%`, "--rotation": `${(index % 9 - 4) * 3}deg`, "--tile-delay": index % 12, "--pile-depth": index % 9 }} aria-label={`Pick ${product.title}`}>
           {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
         </button>;
       })}
