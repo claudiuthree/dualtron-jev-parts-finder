@@ -191,8 +191,10 @@ function ResultPile({ catalogue, matches, picked, onPick, motionKey }) {
         </button>;
       })}
       {matches.map((product, matchIndex) => {
-        const alignedLeft = 21 + (matchIndex * 6.4);
-        const alignedTop = 8;
+        const column = matchIndex % 6;
+        const row = Math.floor(matchIndex / 6);
+        const alignedLeft = 19 + (column * 11.2);
+        const alignedTop = 2 + (row * 31);
         return <button key={`raised-${motionKey}-${product.id}`} className="pile-item is-match" onClick={() => onPick(product.id)} style={{ "--aligned-left": `${alignedLeft}%`, "--aligned-top": `${alignedTop}%`, "--rotation": `${(matchIndex % 5 - 2) * 2}deg`, "--float-delay": `${matchIndex * 130}ms` }} aria-label={`Pick ${product.title}`}>
           {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
         </button>;
@@ -314,7 +316,7 @@ export function App() {
     return [selectedPart, ...neighbours.filter((product) => product.id !== selectedPart.id)];
   }, [assemblyFilter, selectedModel.slug, selectedPart, subassemblyFilter, titleRefinedMatches]);
   const matches = neighbourMatches.slice(0, 24);
-  const carouselMatches = (submittedQuery.trim() || assemblyFilter || subassemblyFilter || selectedPart) ? neighbourMatches.slice(0, 10) : [];
+  const carouselMatches = (submittedQuery.trim() || assemblyFilter || subassemblyFilter || selectedPart) ? neighbourMatches.slice(0, 6) : [];
   const usageTokens = jevRun.usage?.total_tokens ?? jevRun.usage?.totalTokens ?? null;
   const usageCost = jevRun.usage?.cost ?? null;
 
