@@ -308,13 +308,22 @@ button { cursor: pointer; }
 }
 
 @media (max-width: 820px) {
-  .search-stage { min-height: 100svh; padding: 1px 15px 0; }
+  /* Mobile uses normal document flow so variable pill rows can never cover results. */
+  .app-shell { overflow: visible; }
+  .search-stage { min-height: 0; padding: 1px 15px 28px; }
   .search-box { width: 100%; height: 76px; margin-top: 58px; padding-left: 18px; border-radius: 22px; }
   .search-box input { font-size: 16px; }
   .decision-pills { width: 100%; margin-top: 12px; }
   .pill-row { gap: 6px; max-width: 100%; }
   .decision-pills button { padding: 9px 12px; font-size: 12px; }
-  .result-pile { bottom: 18px; width: 100%; }
+  .result-pile {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: 100%;
+    margin: 26px 0 0;
+  }
   .pile-stage { height: 320px; }
   .pile-item { width: 31px; height: 31px; border-radius: 11px; }
   .pile-item.is-match { width: 104px; height: 92px; padding: 3px; border-radius: 22px; }
@@ -325,11 +334,21 @@ button { cursor: pointer; }
   .pile-item.is-match.match-slot-3 { left: 10%; top: calc(35% - 246px); }
   .pile-item.is-match.match-slot-4 { left: 38%; top: calc(35% - 246px); }
   .pile-item.is-match.match-slot-5 { left: 66%; top: calc(35% - 246px); }
-  .raised-grid { --result-size: 94px; --result-columns: 3; top: -278px; grid-template-columns: repeat(var(--result-columns), var(--result-size)); grid-auto-rows: var(--result-size); gap: 8px; width: max-content; padding: 3px; }
-  .raised-grid.density-medium { --result-size: 76px; gap: 7px; }
-  .raised-grid.density-compact { --result-size: 58px; gap: 6px; }
-  .raised-grid.density-dense { --result-size: 38px; gap: 5px; }
-  .raised-grid.pill-density-many { top: -210px; }
+  .raised-grid,
+  .raised-grid.density-medium,
+  .raised-grid.density-compact,
+  .raised-grid.density-dense,
+  .raised-grid.pill-density-many {
+    position: relative;
+    top: auto;
+    left: auto;
+    margin: 24px auto 30px;
+    transform: none;
+  }
+  .raised-grid { --result-size: 94px; --result-columns: 3; grid-template-columns: repeat(var(--result-columns), var(--result-size)); grid-auto-rows: var(--result-size); gap: 8px; width: max-content; padding: 3px; }
+  .raised-grid.density-medium { --result-size: 76px; --result-columns: 3; gap: 7px; }
+  .raised-grid.density-compact { --result-size: 58px; --result-columns: 3; gap: 6px; }
+  .raised-grid.density-dense { --result-size: 50px; --result-columns: 3; gap: 6px; }
   .raised-tile { aspect-ratio: auto; padding: 4px; border-radius: 21px; }
 }
 

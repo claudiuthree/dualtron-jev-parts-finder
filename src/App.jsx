@@ -179,6 +179,13 @@ function ResultPile({ catalogue, matches, picked, onPick, motionKey, pillDensity
   const resultDensity = matches.length <= 6 ? "large" : matches.length <= 12 ? "medium" : matches.length <= 18 ? "compact" : "dense";
   return <section className="result-pile" aria-label="JEV sorted product pile">
     <div className="pile-caption"><strong>Compatible product pile</strong><span>{matches.length} raised by JEV</span></div>
+    <div className={`raised-grid density-${resultDensity} pill-density-${pillDensity}`} aria-label="Selected compatible parts">
+      {matches.map((product, matchIndex) => {
+        return <button key={`raised-${motionKey}-${product.id}`} className="raised-tile" onClick={() => onPick(product.id)} style={{ "--result-delay": `${Math.min(matchIndex, 8) * 55}ms` }} aria-label={`Pick ${product.title}`}>
+          {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
+        </button>;
+      })}
+    </div>
     <div className="pile-stage">
       {pileProducts.map((product, index) => {
         // The catalogue is intentionally a loose tabletop scatter. Matches move
@@ -191,13 +198,6 @@ function ResultPile({ catalogue, matches, picked, onPick, motionKey, pillDensity
           {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
         </button>;
       })}
-      <div className={`raised-grid density-${resultDensity} pill-density-${pillDensity}`} aria-label="Selected compatible parts">
-      {matches.map((product, matchIndex) => {
-        return <button key={`raised-${motionKey}-${product.id}`} className="raised-tile" onClick={() => onPick(product.id)} style={{ "--result-delay": `${Math.min(matchIndex, 8) * 55}ms` }} aria-label={`Pick ${product.title}`}>
-          {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
-        </button>;
-      })}
-      </div>
     </div>
     <p>JEV and title matching raise the most relevant parts; every other item stays in the compatible catalogue.</p>
   </section>;
@@ -287,6 +287,15 @@ export function App() {
     const timer = window.setTimeout(() => setSubmittedQuery(nextQuery), 450);
     return () => window.clearTimeout(timer);
   }, [query, submittedQuery]);
+
+  // An empty field is the browse state: show the full compatible pile and all assemblies.
+  useEffect(() => {
+    if (query.trim()) return;
+    setSubmittedQuery("");
+    setAssemblyFilter("");
+    setSubassemblyFilter("");
+    setSelectedPartId(null);
+  }, [query]);
 
   const categoryMatches = useMemo(() => {
     return PRODUCTS.filter((product) => {
