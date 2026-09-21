@@ -175,27 +175,29 @@ function PartCard({ product, selected, onSelect }) {
 }
 
 function ResultPile({ catalogue, matches, picked, onPick }) {
-  const preferred = [...matches, ...catalogue.filter((product) => !matches.some((match) => match.id === product.id))].slice(0, 54);
-  const matchIds = new Set(matches.map((product) => product.id));
+  const pileProducts = catalogue.slice(0, 54);
   return <section className="result-pile" aria-label="JEV sorted product pile">
     <div className="pile-caption"><strong>Compatible product pile</strong><span>{matches.length} raised by JEV</span></div>
     <div className="pile-stage">
-      {preferred.map((product, index) => {
-        const matchIndex = matches.findIndex((match) => match.id === product.id);
-        const isMatch = matchIds.has(product.id);
+      {pileProducts.map((product, index) => {
         // The catalogue is intentionally a loose tabletop scatter. Matches move
         // onto a smaller, irregular "found" cluster rather than a rigid grid.
         const column = index % 12;
         const row = Math.floor(index / 12);
         const pileLeft = 3 + column * 8 + (row % 2 ? 3.8 : 0);
         const pileTop = 39 + row * 11;
+        return <button key={`pile-${product.id}`} className={`pile-item ${picked.includes(product.id) ? "is-picked" : ""}`} onClick={() => onPick(product.id)} style={{ "--pile-left": `${pileLeft}%`, "--pile-top": `${pileTop}%`, "--rotation": `${(index % 5 - 2) * 2}deg`, "--tile-delay": index % 12 }} aria-label={`Pick ${product.title}`}>
+          {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
+        </button>;
+      })}
+      {matches.map((product, matchIndex) => {
         const alignedPositions = [
           [31, 10], [44, 2], [57, 11], [69, 5],
           [37, 30], [51, 24], [64, 31], [74, 26],
           [44, 49], [57, 45], [68, 51], [32, 50],
         ];
-        const [alignedLeft, alignedTop] = alignedPositions[Math.max(matchIndex, 0) % alignedPositions.length];
-        return <button key={product.id} className={`pile-item ${isMatch ? "is-match" : ""} ${picked.includes(product.id) ? "is-picked" : ""}`} onClick={() => onPick(product.id)} style={{ "--pile-left": `${pileLeft}%`, "--pile-top": `${pileTop}%`, "--aligned-left": `${alignedLeft}%`, "--aligned-top": `${alignedTop}%`, "--rotation": `${(index % 5 - 2) * 2}deg`, "--tile-delay": index % 12 }} aria-label={`Pick ${product.title}`}>
+        const [alignedLeft, alignedTop] = alignedPositions[matchIndex % alignedPositions.length];
+        return <button key={`raised-${product.id}`} className="pile-item is-match" onClick={() => onPick(product.id)} style={{ "--aligned-left": `${alignedLeft}%`, "--aligned-top": `${alignedTop}%`, "--rotation": `${(matchIndex % 5 - 2) * 2}deg` }} aria-label={`Pick ${product.title}`}>
           {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
         </button>;
       })}
@@ -210,8 +212,8 @@ function DecisionPills({ assemblies, subassemblies, activeAssembly, activeSubass
   if (!visibleAssemblies.length && !visibleSubassemblies.length) return null;
 
   return <div className="decision-pills" aria-label="Part classification">
-    {visibleAssemblies.map((assembly) => <button key={assembly} className={activeAssembly === assembly ? "active" : ""} onClick={() => onAssembly(assembly)}>{assembly}</button>)}
-    {visibleSubassemblies.map((subassembly) => <button key={subassembly} className={activeSubassembly === subassembly ? "active" : ""} onClick={() => onSubassembly(subassembly)}>{subassembly}</button>)}
+    {visibleAssemblies.length > 0 && <div className="pill-row">{visibleAssemblies.map((assembly) => <button key={assembly} className={activeAssembly === assembly ? "active" : ""} onClick={() => onAssembly(assembly)}>{assembly}</button>)}</div>}
+    {visibleSubassemblies.length > 0 && <div className="pill-row pill-row-subassembly">{visibleSubassemblies.map((subassembly) => <button key={subassembly} className={activeSubassembly === subassembly ? "active" : ""} onClick={() => onSubassembly(subassembly)}>{subassembly}</button>)}</div>}
   </div>;
 }
 
