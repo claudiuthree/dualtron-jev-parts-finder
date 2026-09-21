@@ -298,7 +298,7 @@ export function App() {
     setAssemblyFilter("");
     setSubassemblyFilter("");
     setSelectedPartId(null);
-  }, [query]);
+  }, [query, submittedQuery]);
 
   const categoryMatches = useMemo(() => {
     return PRODUCTS.filter((product) => {
@@ -335,9 +335,11 @@ export function App() {
     : (assemblyFilter || intent.assembly ? 1 : 0) + (subassemblyFilter || selectedPart?.subassembly?.[0] ? 1 : 0);
 
   useEffect(() => {
+    // A previous JEV decision must never re-select an assembly after clearing the input.
+    if (!submittedQuery.trim()) return;
     setAssemblyFilter(intent.assembly || "");
     setSubassemblyFilter("");
-  }, [intent.category, intent.assembly, selectedModel.slug]);
+  }, [intent.category, intent.assembly, selectedModel.slug, submittedQuery]);
 
   function submitSearch(event) {
     event.preventDefault();
