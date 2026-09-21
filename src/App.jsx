@@ -89,7 +89,7 @@ const PRODUCTS = SHOPIFY_PRODUCTS.map((product) => ({
 
 const MODELS = SHOPIFY_MODEL_INDEX.map((model) => ({
   key: model.name,
-  name: /^(Speedway|Rovoron|Futecher)\b/i.test(model.name) ? model.name : `Dualtron ${model.name}`,
+  name: /^(Dualtron|Speedway|Rovoron|Futecher)\b/i.test(model.name) ? model.name : `Dualtron ${model.name}`,
   activeProductCount: model.activeProductCount,
   count: PRODUCTS.filter((product) => product.model?.includes(model.name)).length,
 }));
