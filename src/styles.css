@@ -104,6 +104,12 @@ button { cursor: pointer; }
 .search-submit:hover { background: #3554d3; transform: translate(2px, -2px); }
 .search-submit { display: none; }
 .search-box input { padding-right: 4px; }
+.filter-bar { position: relative; z-index: 5; display: flex; align-items: center; gap: 8px; width: min(1120px, calc(100vw - 48px)); min-height: 58px; margin: 14px auto 0; padding: 8px 10px; overflow: hidden; border: 1px solid #e0e5ef; border-radius: 19px; background: rgba(255,255,255,.78); box-shadow: 0 12px 32px rgba(45,58,98,.07); }
+.filter-clause { display: flex; flex: 0 1 auto; align-items: center; min-width: 0; color: #46536b; font-size: 13px; font-weight: 720; white-space: nowrap; }
+.filter-clause span { padding: 10px 8px 10px 11px; border-radius: 11px 0 0 11px; background: #f2f3f6; }
+.filter-clause select { min-width: 0; max-width: 210px; padding: 10px 31px 10px 10px; border: 0; border-radius: 0 11px 11px 0; outline: 0; color: #155dcc; background: #eaf3ff; font: inherit; font-weight: 760; text-overflow: ellipsis; cursor: pointer; }
+.filter-clause select:disabled { color: #9ba6b7; background: #f5f6f8; cursor: not-allowed; }
+.filter-summary { margin-left: auto; padding-left: 10px; color: #7f8ba1; font-size: 12px; font-weight: 700; white-space: nowrap; }
 .decision-pills { position: relative; z-index: 5; display: grid; justify-items: center; gap: 7px; margin: 15px auto 0; }
 .pill-row { display: flex; justify-content: center; flex-wrap: wrap; gap: 7px; max-width: min(900px, calc(100vw - 48px)); }
 .pill-row-subassembly { max-width: min(780px, calc(100vw - 48px)); }
@@ -268,6 +274,11 @@ button { cursor: pointer; }
   .tag-source { display: none; }
   .search-stage { min-height: 430px; padding-top: 38px; }
   .stage-intro h1 { font-size: clamp(34px, 9vw, 52px); }
+  .filter-bar { width: calc(100vw - 30px); overflow-x: auto; border-radius: 17px; scrollbar-width: none; }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-clause { flex: 0 0 auto; }
+  .filter-clause select { max-width: 185px; }
+  .filter-summary { display: none; }
   .context-row { flex-direction: column; gap: 10px; }
   .result-pile { width: calc(100vw - 30px); }.pile-stage { height: 205px; }.pile-item.is-match { width: 96px; height: 82px; }
   .product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px 14px; }
@@ -321,6 +332,10 @@ button { cursor: pointer; }
   .search-stage { min-height: 0; padding: 1px 15px 28px; }
   .search-box { width: 100%; height: 76px; margin-top: 58px; padding-left: 18px; border-radius: 22px; }
   .search-box input { font-size: 16px; }
+  .filter-bar { width: 100%; min-height: 54px; margin-top: 12px; padding: 7px; }
+  .filter-clause { font-size: 12px; }
+  .filter-clause span { padding: 9px 7px 9px 10px; }
+  .filter-clause select { max-width: 165px; padding: 9px 27px 9px 8px; }
   .decision-pills { width: 100%; margin-top: 12px; }
   .pill-row { gap: 6px; max-width: 100%; }
   .decision-pills button { padding: 9px 12px; font-size: 12px; }

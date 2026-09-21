@@ -3,7 +3,6 @@ import {
   ArrowUpRight,
   BatteryCharging,
   Check,
-  ChevronDown,
   CircleAlert,
   Cpu,
   Disc3,
@@ -90,12 +89,10 @@ const PRODUCTS = SHOPIFY_PRODUCTS.map((product) => ({
 
 const MODELS = SHOPIFY_MODEL_INDEX.map((model) => ({
   key: model.name,
-  name: `Dualtron ${model.name}`,
+  name: /^(Speedway|Rovoron|Futecher)\b/i.test(model.name) ? model.name : `Dualtron ${model.name}`,
   activeProductCount: model.activeProductCount,
   count: PRODUCTS.filter((product) => product.model?.includes(model.name)).length,
 }));
-
-const MODEL_VALUE_COUNTS = new Map(SHOPIFY_MODEL_INDEX.map((model) => [model.name, model.activeProductCount]));
 
 const INTENT_ALIASES = {
   controller: ["controller", "esc", "control box", "speed controller"],
@@ -207,14 +204,29 @@ function ResultPile({ catalogue, matches, picked, onPick, onAddToCart, motionKey
   </section>;
 }
 
-function DecisionPills({ assemblies, subassemblies, activeAssembly, activeSubassembly, browseMode, onAssembly, onSubassembly }) {
-  const visibleAssemblies = browseMode ? assemblies : activeAssembly ? [activeAssembly] : [];
-  const visibleSubassemblies = browseMode ? (activeAssembly ? subassemblies : []) : activeSubassembly ? [activeSubassembly] : [];
-  if (!visibleAssemblies.length && !visibleSubassemblies.length) return null;
-
-  return <div className="decision-pills" aria-label="Part classification">
-    {visibleAssemblies.length > 0 && <div className="pill-row">{visibleAssemblies.map((assembly) => <button key={assembly} className={activeAssembly === assembly ? "active" : ""} onClick={() => onAssembly(assembly)}>{assembly}</button>)}</div>}
-    {visibleSubassemblies.length > 0 && <div className="pill-row pill-row-subassembly">{visibleSubassemblies.map((subassembly) => <button key={subassembly} className={activeSubassembly === subassembly ? "active" : ""} onClick={() => onSubassembly(subassembly)}>{subassembly}</button>)}</div>}
+function FilterBar({ models, selectedModel, assemblies, subassemblies, activeAssembly, activeSubassembly, onModel, onAssembly, onSubassembly }) {
+  return <div className="filter-bar" aria-label="Filter compatible scooter parts">
+    <label className="filter-clause">
+      <span>Model is</span>
+      <select value={selectedModel.key} onChange={(event) => onModel(models.find((model) => model.key === event.target.value) ?? models[0])} aria-label="Scooter model">
+        {models.map((model) => <option key={model.key} value={model.key}>{model.name}</option>)}
+      </select>
+    </label>
+    <label className="filter-clause">
+      <span>Assembly is</span>
+      <select value={activeAssembly} onChange={(event) => onAssembly(event.target.value)} aria-label="Assembly">
+        <option value="">All assemblies</option>
+        {assemblies.map((assembly) => <option key={assembly} value={assembly}>{assembly}</option>)}
+      </select>
+    </label>
+    <label className="filter-clause">
+      <span>Subassembly is</span>
+      <select value={activeSubassembly} disabled={!activeAssembly || !subassemblies.length} onChange={(event) => onSubassembly(event.target.value)} aria-label="Subassembly">
+        <option value="">All subassemblies</option>
+        {subassemblies.map((subassembly) => <option key={subassembly} value={subassembly}>{subassembly}</option>)}
+      </select>
+    </label>
+    <span className="filter-summary">{SHOPIFY_MODEL_INDEX_SUMMARY.productsWithModel.toLocaleString()} active parts</span>
   </div>;
 }
 
@@ -224,7 +236,6 @@ export function App() {
   const [submittedQuery, setSubmittedQuery] = useState(query);
   const [picked, setPicked] = useState([]);
   const [selectedPartId, setSelectedPartId] = useState(null);
-  const [showModelMenu, setShowModelMenu] = useState(false);
   const [assemblyFilter, setAssemblyFilter] = useState("");
   const [subassemblyFilter, setSubassemblyFilter] = useState("");
   const [intent, setIntent] = useState(() => classifyRequest(query));
@@ -372,8 +383,8 @@ export function App() {
   }
 
   function switchModel(model) {
+    if (!model) return;
     setSelectedModel(model);
-    setShowModelMenu(false);
     const nextQuery = query.replace(/Dualtron (Mini|Victor|Thunder)/i, model.name);
     setQuery(nextQuery);
     setSubmittedQuery(nextQuery);
@@ -464,26 +475,15 @@ export function App() {
           <button className="search-submit" type="submit" aria-label="Find parts"><ArrowUpRight size={22} /></button>
         </form>
 
-        <div className="context-row">
-          <div className="model-metafield-source" aria-label="Shopify model data source">
-            <small>{SHOPIFY_MODEL_INDEX_SUMMARY.productsWithModel.toLocaleString()} active parts · {SHOPIFY_MODEL_INDEX_SUMMARY.modelValues} models</small>
-          </div>
-          <label className="model-selector">
-            <span className="model-dot" />
-            <select value={selectedModel.key} onChange={(event) => switchModel(MODELS.find((model) => model.key === event.target.value) ?? MODELS[0])} aria-label="Select your scooter model">
-              {MODELS.map((model) => <option key={model.key} value={model.key}>{model.name} · {model.activeProductCount} active parts</option>)}
-            </select>
-            <ChevronDown size={14} aria-hidden="true" />
-          </label>
-        </div>
-
-        <DecisionPills
+        <FilterBar
           assemblies={availableAssemblies}
           subassemblies={availableSubassemblies}
           activeAssembly={assemblyFilter || intent.assembly || selectedPart?.assembly?.[0]}
           activeSubassembly={subassemblyFilter || selectedPart?.subassembly?.[0]}
-          browseMode={!query.trim()}
+          models={MODELS}
+          selectedModel={selectedModel}
           onAssembly={chooseAssembly}
+          onModel={switchModel}
           onSubassembly={chooseSubassembly}
         />
 
