@@ -105,6 +105,7 @@ button { cursor: pointer; }
 .search-submit { display: none; }
 .search-box input { padding-right: 4px; }
 .filter-bar { position: relative; z-index: 5; display: flex; align-items: center; gap: 8px; width: min(1120px, calc(100vw - 48px)); min-height: 58px; margin: 14px auto 0; padding: 8px 10px; overflow: hidden; border: 1px solid #e0e5ef; border-radius: 19px; background: rgba(255,255,255,.78); box-shadow: 0 12px 32px rgba(45,58,98,.07); }
+.filter-bar:focus-within { border-color: #0b63ce; box-shadow: 0 0 0 3px #0b63ce, 0 12px 32px rgba(45,58,98,.09); }
 .filter-menu { position: relative; display: flex; flex: 0 1 auto; align-items: center; min-width: 0; color: #46536b; font-size: 13px; font-weight: 720; white-space: nowrap; }
 .filter-label { padding: 10px 8px 10px 11px; border-radius: 11px 0 0 11px; background: #f2f3f6; }
 .filter-value { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 210px; padding: 10px 10px; border: 0; border-radius: 0 11px 11px 0; outline: 0; color: #155dcc; background: #eaf3ff; font: inherit; font-weight: 760; cursor: pointer; }
