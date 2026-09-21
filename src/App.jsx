@@ -204,14 +204,14 @@ function ResultPile({ catalogue, matches, picked, onPick }) {
   </section>;
 }
 
-function DecisionPills({ intent, matches }) {
-  const assembly = intent.assembly || matches[0]?.assembly?.[0];
-  const subassembly = matches[0]?.subassembly?.[0];
-  if (!assembly && !subassembly) return null;
+function DecisionPills({ assemblies, subassemblies, activeAssembly, activeSubassembly, browseMode, onAssembly, onSubassembly }) {
+  const visibleAssemblies = browseMode ? assemblies : activeAssembly ? [activeAssembly] : [];
+  const visibleSubassemblies = browseMode ? (activeAssembly ? subassemblies : []) : activeSubassembly ? [activeSubassembly] : [];
+  if (!visibleAssemblies.length && !visibleSubassemblies.length) return null;
 
   return <div className="decision-pills" aria-label="Part classification">
-    {assembly && <span>{assembly}</span>}
-    {subassembly && <span>{subassembly}</span>}
+    {visibleAssemblies.map((assembly) => <button key={assembly} className={activeAssembly === assembly ? "active" : ""} onClick={() => onAssembly(assembly)}>{assembly}</button>)}
+    {visibleSubassemblies.map((subassembly) => <button key={subassembly} className={activeSubassembly === subassembly ? "active" : ""} onClick={() => onSubassembly(subassembly)}>{subassembly}</button>)}
   </div>;
 }
 
@@ -220,6 +220,7 @@ export function App() {
   const [query, setQuery] = useState("I need a controller for my Dualtron Mini");
   const [submittedQuery, setSubmittedQuery] = useState(query);
   const [picked, setPicked] = useState([]);
+  const [selectedPartId, setSelectedPartId] = useState(null);
   const [showModelMenu, setShowModelMenu] = useState(false);
   const [assemblyFilter, setAssemblyFilter] = useState("");
   const [subassemblyFilter, setSubassemblyFilter] = useState("");
@@ -306,8 +307,16 @@ export function App() {
     const refined = allMatches.filter((product) => matchesTitleIntent(product, specificTitleTerms));
     return refined.length ? refined : allMatches;
   }, [allMatches, specificTitleTerms]);
-  const matches = titleRefinedMatches.slice(0, 24);
-  const carouselMatches = submittedQuery.trim() ? titleRefinedMatches.slice(0, 10) : [];
+  const selectedPart = useMemo(() => PRODUCTS.find((product) => product.id === selectedPartId) ?? null, [selectedPartId]);
+  const neighbourMatches = useMemo(() => {
+    if (!selectedPart) return titleRefinedMatches;
+    const neighbours = PRODUCTS.filter((product) => product.compatibilityTags.includes(selectedModel.slug)
+      && (!assemblyFilter || product.assembly?.includes(assemblyFilter))
+      && (!subassemblyFilter || product.subassembly?.includes(subassemblyFilter)));
+    return [selectedPart, ...neighbours.filter((product) => product.id !== selectedPart.id)];
+  }, [assemblyFilter, selectedModel.slug, selectedPart, subassemblyFilter, titleRefinedMatches]);
+  const matches = neighbourMatches.slice(0, 24);
+  const carouselMatches = (submittedQuery.trim() || assemblyFilter || subassemblyFilter || selectedPart) ? neighbourMatches.slice(0, 10) : [];
   const usageTokens = jevRun.usage?.total_tokens ?? jevRun.usage?.totalTokens ?? null;
   const usageCost = jevRun.usage?.cost ?? null;
 
@@ -330,6 +339,7 @@ export function App() {
     setAssemblyFilter("");
     setSubassemblyFilter("");
     setPicked([]);
+    setSelectedPartId(null);
   }
 
   function useCategory(categoryId) {
@@ -359,6 +369,25 @@ export function App() {
     setPicked((current) => current.includes(productId)
       ? current.filter((id) => id !== productId)
       : [...current, productId]);
+  }
+
+  function selectPart(productId) {
+    const product = PRODUCTS.find((item) => item.id === productId);
+    if (!product) return;
+    setSelectedPartId(productId);
+    setAssemblyFilter(product.assembly?.[0] || "");
+    setSubassemblyFilter(product.subassembly?.[0] || "");
+  }
+
+  function chooseAssembly(assembly) {
+    setSelectedPartId(null);
+    setAssemblyFilter((current) => current === assembly ? "" : assembly);
+    setSubassemblyFilter("");
+  }
+
+  function chooseSubassembly(subassembly) {
+    setSelectedPartId(null);
+    setSubassemblyFilter((current) => current === subassembly ? "" : subassembly);
   }
 
   const modelProductCount = PRODUCTS.filter((product) => product.compatibilityTags.includes(selectedModel.slug)).length;
@@ -394,13 +423,21 @@ export function App() {
           <button className="search-submit" type="submit" aria-label="Find parts"><ArrowUpRight size={22} /></button>
         </form>
 
-        <DecisionPills intent={intent} matches={titleRefinedMatches} />
+        <DecisionPills
+          assemblies={availableAssemblies}
+          subassemblies={availableSubassemblies}
+          activeAssembly={assemblyFilter || intent.assembly || selectedPart?.assembly?.[0]}
+          activeSubassembly={subassemblyFilter || selectedPart?.subassembly?.[0]}
+          browseMode={!query.trim()}
+          onAssembly={chooseAssembly}
+          onSubassembly={chooseSubassembly}
+        />
 
         <div className="context-row">
           <span className="fixed-model"><span className="model-dot" />Dualtron Mini</span>
         </div>
 
-        <ResultPile catalogue={PRODUCTS.filter((product) => product.compatibilityTags.includes(selectedModel.slug))} matches={carouselMatches} picked={picked} onPick={togglePicked} />
+        <ResultPile catalogue={PRODUCTS.filter((product) => product.compatibilityTags.includes(selectedModel.slug))} matches={carouselMatches} picked={picked} onPick={selectPart} />
       </section>
 
       <section className="results-section">
