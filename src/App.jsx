@@ -191,12 +191,8 @@ function ResultPile({ catalogue, matches, picked, onPick, motionKey }) {
         </button>;
       })}
       {matches.map((product, matchIndex) => {
-        const alignedPositions = [
-          [31, 10], [44, 2], [57, 11], [69, 5],
-          [37, 30], [51, 24], [64, 31], [74, 26],
-          [44, 49], [57, 45], [68, 51], [32, 50],
-        ];
-        const [alignedLeft, alignedTop] = alignedPositions[matchIndex % alignedPositions.length];
+        const alignedLeft = 21 + (matchIndex * 6.4);
+        const alignedTop = 8;
         return <button key={`raised-${motionKey}-${product.id}`} className="pile-item is-match" onClick={() => onPick(product.id)} style={{ "--aligned-left": `${alignedLeft}%`, "--aligned-top": `${alignedTop}%`, "--rotation": `${(matchIndex % 5 - 2) * 2}deg`, "--float-delay": `${matchIndex * 130}ms` }} aria-label={`Pick ${product.title}`}>
           {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
         </button>;
