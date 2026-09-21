@@ -3,6 +3,7 @@ import {
   ArrowUpRight,
   BatteryCharging,
   Check,
+  ChevronDown,
   CircleAlert,
   Cpu,
   Disc3,
