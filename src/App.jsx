@@ -174,7 +174,7 @@ function PartCard({ product, selected, onSelect }) {
   );
 }
 
-function ResultPile({ catalogue, matches, picked, onPick }) {
+function ResultPile({ catalogue, matches, picked, onPick, motionKey }) {
   const pileProducts = catalogue.slice(0, 54);
   return <section className="result-pile" aria-label="JEV sorted product pile">
     <div className="pile-caption"><strong>Compatible product pile</strong><span>{matches.length} raised by JEV</span></div>
@@ -197,7 +197,7 @@ function ResultPile({ catalogue, matches, picked, onPick }) {
           [44, 49], [57, 45], [68, 51], [32, 50],
         ];
         const [alignedLeft, alignedTop] = alignedPositions[matchIndex % alignedPositions.length];
-        return <button key={`raised-${product.id}`} className="pile-item is-match" onClick={() => onPick(product.id)} style={{ "--aligned-left": `${alignedLeft}%`, "--aligned-top": `${alignedTop}%`, "--rotation": `${(matchIndex % 5 - 2) * 2}deg` }} aria-label={`Pick ${product.title}`}>
+        return <button key={`raised-${motionKey}-${product.id}`} className="pile-item is-match" onClick={() => onPick(product.id)} style={{ "--aligned-left": `${alignedLeft}%`, "--aligned-top": `${alignedTop}%`, "--rotation": `${(matchIndex % 5 - 2) * 2}deg`, "--float-delay": `${matchIndex * 130}ms` }} aria-label={`Pick ${product.title}`}>
           {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : <IconForCategory category={product.category} size={22} />}
         </button>;
       })}
@@ -439,7 +439,7 @@ export function App() {
           <span className="fixed-model"><span className="model-dot" />Dualtron Mini</span>
         </div>
 
-        <ResultPile catalogue={PRODUCTS.filter((product) => product.compatibilityTags.includes(selectedModel.slug))} matches={carouselMatches} picked={picked} onPick={selectPart} />
+        <ResultPile catalogue={PRODUCTS.filter((product) => product.compatibilityTags.includes(selectedModel.slug))} matches={carouselMatches} picked={picked} onPick={selectPart} motionKey={`${submittedQuery}-${assemblyFilter}-${subassemblyFilter}-${selectedPartId ?? "none"}`} />
       </section>
 
       <section className="results-section">
